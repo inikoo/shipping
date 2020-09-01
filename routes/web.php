@@ -16,3 +16,8 @@
 $router->get('/', function () use ($router) {
     return $router->app->version();
 });
+
+$router->group(['middleware' => 'auth'], function ($router)
+{
+    $router->get('me', 'AuthController@me');
+});
