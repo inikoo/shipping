@@ -18,7 +18,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  * Class User
  * @property string $username
  *
- * @package App
+ * @mixin \Illuminate\Database\Eloquent\Builder
  */
 class User extends Model implements AuthenticatableContract, AuthorizableContract, JWTSubject
 {
@@ -71,6 +71,10 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
                 print 'Token: '.$token."\n";
             }
         );
+    }
+
+    public function tenants() {
+        return $this->hasMany('App\Models\Tenant');
     }
 
 }

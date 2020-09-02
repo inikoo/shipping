@@ -42,12 +42,7 @@ class Country extends Model {
         return $this->hasMany('App\Models\Shipper');
     }
 
-    public function update_number_shippers() {
 
-        $users = Country::withCount(['shippers'])->get();
-        dd($users);
-
-    }
 
 
 }

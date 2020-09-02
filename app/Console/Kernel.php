@@ -15,6 +15,7 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         Commands\CreateUser::class,
         Commands\CreateShipper::class,
+        Commands\CreateTenant::class,
 
     ];
 

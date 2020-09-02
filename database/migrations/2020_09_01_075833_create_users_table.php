@@ -21,6 +21,8 @@ class CreateUsersTable extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->smallIncrements('id');
             $table->string('username')->unique();
+            $table->unsignedSmallInteger('tenants_count')->default(0);
+
             $table->jsonb('data');
             $table->timestampsTz();
         });

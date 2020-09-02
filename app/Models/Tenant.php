@@ -1,7 +1,7 @@
 <?php
 /*
  * Author: Raul A Perusquía-Flores (raul@aiku.io)
- * Created: Wed, 02 Sep 2020 03:17:24 Malaysia Time, Kuala Lumpur, Malaysia
+ * Created: Wed, 02 Sep 2020 14:59:34 Malaysia Time, Kuala Lumpur, Malaysia
  * Copyright (c) 2020. Aiku.io
  */
 
@@ -12,14 +12,14 @@ use Illuminate\Database\Eloquent\Model;
 
 
 /**
- * Class Shipper
+ * Class Tenant
  *
  * @property string $slug
  * @property string $name
  *
  * @package App
  */
-class Shipper extends Model {
+class Tenant extends Model {
 
 
 
@@ -33,21 +33,20 @@ class Shipper extends Model {
 
 
     protected $fillable = [
-        'slug',
-        'name'
+        'slug','data'
     ];
 
-    public function country()
+    public function user()
     {
-        return $this->belongsTo('App\Models\Country');
+        return $this->belongsTo('App\Models\User');
     }
 
     protected static function booted() {
         static::created(
-            function ($shipper) {
+            function ($tenant) {
 
-                $shipper->country->shippers_count=$shipper->country->shippers()->count();
-                $shipper->country->save();
+                $tenant->user->tenants_count=$tenant->user->tenants()->count();
+                $tenant->user->save();
 
 
             }
