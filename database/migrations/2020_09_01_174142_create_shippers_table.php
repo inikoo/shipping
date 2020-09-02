@@ -1,7 +1,7 @@
 <?php
 /*
  * Author: Raul A Perusquía-Flores (raul@aiku.io)
- * Created: Wed, 02 Sep 2020 03:38:10 Malaysia Time, Kuala Lumpur, Malaysia
+ * Created: Wed, 02 Sep 2020 03:38:24 Malaysia Time, Kuala Lumpur, Malaysia
  * Copyright (c) 2020. Aiku.io
  */
 
@@ -9,7 +9,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateUsersTable extends Migration
+class CreateShippersTable extends Migration
 {
     /**
      * Run the migrations.
@@ -18,9 +18,12 @@ class CreateUsersTable extends Migration
      */
     public function up()
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('shippers', function (Blueprint $table) {
             $table->smallIncrements('id');
-            $table->string('username')->unique();
+            $table->string('slug')->unique()->index();
+            $table->string('name')->nullable();
+            $table->unsignedSmallInteger('country_id');
+            $table->foreign('country_id')->references('id')->on('countries');
             $table->jsonb('data');
             $table->timestampsTz();
         });
@@ -33,6 +36,6 @@ class CreateUsersTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('shippers');
     }
 }

@@ -1,11 +1,11 @@
 <?php
 /*
  * Author: Raul A Perusquía-Flores (raul@aiku.io)
- * Created: Tue, 01 Sep 2020 16:05:01 Malaysia Time, Kuala Lumpur, Malaysia
+ * Created: Wed, 02 Sep 2020 03:17:24 Malaysia Time, Kuala Lumpur, Malaysia
  * Copyright (c) 2020. Aiku.io
  */
 
-namespace App;
+namespace App\Models;
 
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;

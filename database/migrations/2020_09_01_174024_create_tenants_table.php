@@ -1,15 +1,10 @@
 <?php
-/*
- * Author: Raul A Perusquía-Flores (raul@aiku.io)
- * Created: Wed, 02 Sep 2020 03:38:10 Malaysia Time, Kuala Lumpur, Malaysia
- * Copyright (c) 2020. Aiku.io
- */
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateUsersTable extends Migration
+class CreateTenantsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -18,9 +13,11 @@ class CreateUsersTable extends Migration
      */
     public function up()
     {
-        Schema::create('users', function (Blueprint $table) {
-            $table->smallIncrements('id');
-            $table->string('username')->unique();
+        Schema::create('tenants', function (Blueprint $table) {
+            $table->id();
+            $table->string('slug')->unique()->index();
+            $table->unsignedSmallInteger('user_id');
+            $table->foreign('user_id')->references('id')->on('users');
             $table->jsonb('data');
             $table->timestampsTz();
         });
@@ -33,6 +30,7 @@ class CreateUsersTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('tenants');
+
     }
 }
