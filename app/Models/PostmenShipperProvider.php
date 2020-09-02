@@ -38,7 +38,7 @@ class PostmenShipperProvider extends Model {
 
     public function shipper()
     {
-        return $this->morphOne('App\Models\Shipper', 'shipperable');
+        return $this->morphOne('App\Models\Shipper', 'provider');
     }
 
 

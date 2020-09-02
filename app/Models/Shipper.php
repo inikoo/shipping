@@ -44,9 +44,9 @@ class Shipper extends Model {
         return $this->belongsTo('App\Models\Country');
     }
 
-    public function shipperable()
+    public function provider()
     {
-        return $this->morphTo();
+        return $this->morphTo(__FUNCTION__,'provider_type','provider_id');
     }
 
 

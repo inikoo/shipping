@@ -24,8 +24,8 @@ class CreateShippersTable extends Migration
             $table->string('name')->nullable();
             $table->unsignedSmallInteger('country_id');
             $table->foreign('country_id')->references('id')->on('countries');
-            $table->unsignedSmallInteger('shipperable_id')->index()->nullable();
-            $table->string('shipperable_type')->index()->nullable();
+            $table->unsignedSmallInteger('provider_id')->index()->nullable();
+            $table->string('provider_type')->index()->nullable();
 
             $table->jsonb('data');
             $table->timestampsTz();

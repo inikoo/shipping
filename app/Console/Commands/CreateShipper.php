@@ -69,7 +69,7 @@ class CreateShipper extends Command {
 
 
 
-        $shipper->shipperable()->associate($shipper_provider)->save();
+        $shipper->provider()->associate($shipper_provider)->save();
 
 
         return 0;
