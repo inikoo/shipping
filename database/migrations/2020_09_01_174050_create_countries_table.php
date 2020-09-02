@@ -22,6 +22,7 @@ class CreateCountriesTable extends Migration
             $table->smallIncrements('id');
             $table->string('code',2)->unique()->index();
             $table->string('name');
+            $table->unsignedSmallInteger('shippers_count')->default(0);
             $table->jsonb('data');
             $table->timestampsTz();
         });

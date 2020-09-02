@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $name
  * @property string $code
  *
- * @package App
+ * @mixin \Illuminate\Database\Eloquent\Builder
  */
 class Country extends Model {
 
@@ -37,6 +37,17 @@ class Country extends Model {
         'name',
         'code'
     ];
+
+    public function shippers() {
+        return $this->hasMany('App\Models\Shipper');
+    }
+
+    public function update_number_shippers() {
+
+        $users = Country::withCount(['shippers'])->get();
+        dd($users);
+
+    }
 
 
 }

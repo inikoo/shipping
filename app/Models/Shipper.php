@@ -14,8 +14,8 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * Class Country
  *
+ * @property string $slug
  * @property string $name
- * @property string $code
  *
  * @package App
  */
@@ -33,9 +33,25 @@ class Shipper extends Model {
 
 
     protected $fillable = [
-        'name',
-        'code'
+        'slug',
+        'name'
     ];
 
+    public function country()
+    {
+        return $this->belongsTo('App\Models\Country');
+    }
+
+    protected static function booted() {
+        static::created(
+            function ($shipper) {
+
+                $shipper->country->shippers_count=$shipper->country->shippers()->count();
+                $shipper->country->save();
+
+
+            }
+        );
+    }
 
 }

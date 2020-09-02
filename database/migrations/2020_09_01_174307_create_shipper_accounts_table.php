@@ -14,11 +14,13 @@ class CreateShipperAccountsTable extends Migration
     public function up()
     {
         Schema::create('shipper_accounts', function (Blueprint $table) {
-            $table->smallIncrements('id');
+            $table->increments('id');
             $table->string('slug')->unique()->index();
             $table->string('name')->nullable();
             $table->unsignedSmallInteger('shipper_id');
             $table->foreign('shipper_id')->references('id')->on('shippers');
+            $table->unsignedSmallInteger('tenant_id');
+            $table->foreign('tenant_id')->references('id')->on('tenants');
             $table->jsonb('data');
             $table->timestampsTz();
         });
