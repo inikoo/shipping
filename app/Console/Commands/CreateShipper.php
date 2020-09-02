@@ -61,8 +61,7 @@ class CreateShipper extends Command {
 
         switch ($this->argument('provider')) {
             default:
-                //$shipper_provider = PostmenShipperProvider::where('slug', 'v1')->first();
-                $shipper_provider = PostmenShipperProvider::find(1);
+                $shipper_provider = PostmenShipperProvider::where('slug', 'v3')->first();
 
         }
 

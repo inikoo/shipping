@@ -18,7 +18,7 @@ class ShipperProvidersSeeder extends Seeder {
 
         try{
             $postmen_shipper_provider       = new PostmenShipperProvider;
-            $postmen_shipper_provider->slug = 'v1';
+            $postmen_shipper_provider->slug = 'v3';
             $postmen_shipper_provider->save();
         }catch (Exception $e){
             print "Postmen Model v1 already in the database\n";
