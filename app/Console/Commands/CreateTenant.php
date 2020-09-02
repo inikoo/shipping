@@ -52,9 +52,6 @@ class CreateTenant extends Command {
         }
 
 
-        print_r($data);
-
-
         $tenant = new Tenant(
             [
                 'slug' => $this->argument('slug'),
