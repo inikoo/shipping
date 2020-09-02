@@ -8,6 +8,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Country;
+use App\Models\PostmenShipperProvider;
 use App\Models\Shipper;
 use Illuminate\Console\Command;
 
@@ -17,7 +18,7 @@ class CreateShipper extends Command {
      *
      * @var string
      */
-    protected $signature = 'add:shipper {country_code} {slug} {name}';
+    protected $signature = 'add:shipper {country_code} {slug} {name} {provider}';
 
     /**
      * The console command description.
@@ -43,20 +44,32 @@ class CreateShipper extends Command {
     public function handle() {
 
 
-
+        /**
+         * @var $shipper Shipper
+         */
         $shipper = new Shipper(
             [
                 'slug' => $this->argument('slug'),
                 'name' => $this->argument('name'),
-                ]
+            ]
         );
 
         $country = (new Country)->where('code', $this->argument('country_code'))->first();
 
-        $country->shippers()->save($shipper);
+        $shipper = $country->shippers()->save($shipper);
+
+
+        switch ($this->argument('provider')) {
+            default:
+                //$shipper_provider = PostmenShipperProvider::where('slug', 'v1')->first();
+                $shipper_provider = PostmenShipperProvider::find(1);
+
+        }
 
 
 
+
+        $shipper->shipperable()->associate($shipper_provider)->save();
 
 
         return 0;

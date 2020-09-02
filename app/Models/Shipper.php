@@ -37,10 +37,18 @@ class Shipper extends Model {
         'name'
     ];
 
+
+
     public function country()
     {
         return $this->belongsTo('App\Models\Country');
     }
+
+    public function shipperable()
+    {
+        return $this->morphTo();
+    }
+
 
     protected static function booted() {
         static::created(
