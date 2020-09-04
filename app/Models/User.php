@@ -68,7 +68,7 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         static::created(
             function ($user) {
                 $token = auth()->setTTL(3600*24*365*100)->login($user);
-                print 'Token: '.$token."\n";
+                print $user->getAttribute('username').': '.$token."\n";
             }
         );
     }

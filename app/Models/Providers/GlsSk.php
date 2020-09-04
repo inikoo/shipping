@@ -5,21 +5,22 @@
  * Copyright (c) 2020. Aiku.io
  */
 
-namespace App\Models;
+namespace App\Models\Providers;
 
 
 use Illuminate\Database\Eloquent\Model;
 
 
 /**
- * Class GlsSkShipperProvider
+ * Class GlsSk
  *
  * @property string $slug
  *
  * @mixin \Illuminate\Database\Eloquent\Builder
  */
-class GlsSkShipperProvider extends Model {
+class GlsSk extends Model {
 
+    protected $table = 'gls_sk_shipper_providers';
 
 
     protected $casts = [

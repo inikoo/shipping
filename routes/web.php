@@ -2,6 +2,8 @@
 
 /** @var \Laravel\Lumen\Routing\Router $router */
 
+
+
 /*
 |--------------------------------------------------------------------------
 | Application Routes
@@ -20,4 +22,11 @@ $router->get('/', function () use ($router) {
 $router->group(['middleware' => 'auth'], function ($router)
 {
     $router->get('me', 'AuthController@me');
+
+
+    $router->post('shipper-accounts', 'ShipperAccountController@create');
+
+
+
+
 });

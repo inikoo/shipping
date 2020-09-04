@@ -9,7 +9,8 @@
         "chuckrincon/lumen-config-discover": "^1.0",
         "laravel/lumen-framework": "^7.0",
         "tymon/jwt-auth": "^1.0",
-        "ext-json": "*"
+        "ext-json": "*",
+        "ext-curl": "*"
     },
     "require-dev": {
         "fzaninotto/faker": "^1.9.1",

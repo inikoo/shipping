@@ -17,14 +17,14 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $slug
  * @property string $name
  *
- * @package App
+ * @mixin \Illuminate\Database\Eloquent\Builder
  */
 class Shipper extends Model {
 
 
 
     protected $casts = [
-        'data' => 'array'
+        'data' => 'array',
     ];
 
     protected $attributes = [

@@ -1,7 +1,7 @@
 <?php
 /*
  * Author: Raul A Perusquía-Flores (raul@aiku.io)
- * Created: Wed, 02 Sep 2020 03:17:24 Malaysia Time, Kuala Lumpur, Malaysia
+ * Created: Fri, 04 Sep 2020 18:22:50 Malaysia Time, Kuala Lumpur, Malaysia
  * Copyright (c) 2020. Aiku.io
  */
 
@@ -12,34 +12,37 @@ use Illuminate\Database\Eloquent\Model;
 
 
 /**
- * Class PostmenShipperProvider
+ * Class ShipperAccount
  *
  * @property string $slug
+ * @property string $label
+ * @property integer $shipper_id
+ * @property integer $tenant_id
+ * @property array $credentials
+ * @property array $data
  *
  * @mixin \Illuminate\Database\Eloquent\Builder
  */
-class PostmenShipperProvider extends Model {
+class ShipperAccount extends Model {
 
 
 
     protected $casts = [
-        'data' => 'array'
+        'data' => 'array',
+        'credentials' => 'array',
     ];
 
     protected $attributes = [
         'data' => '{}',
+        'credentials'=> '{}'
     ];
 
 
     protected $fillable = [
         'slug',
+        'name'
     ];
 
-
-    public function shipper()
-    {
-        return $this->morphOne('App\Models\Shipper', 'provider');
-    }
 
 
 

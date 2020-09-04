@@ -8,7 +8,8 @@
 namespace App\Console\Commands;
 
 use App\Models\Country;
-use App\Models\PostmenShipperProvider;
+use App\Models\Providers\DpdSk;
+use App\Models\Providers\Postmen;
 use App\Models\Shipper;
 use Illuminate\Console\Command;
 
@@ -60,12 +61,13 @@ class CreateShipper extends Command {
 
 
         switch ($this->argument('provider')) {
+            case 'dpd-sk':
+                $shipper_provider = (new DpdSk)->where('slug', 'v2-json')->first();
+                break;
             default:
-                $shipper_provider = PostmenShipperProvider::where('slug', 'v3')->first();
+                $shipper_provider = (new Postmen)->where('slug', 'v3')->first();
 
         }
-
-
 
 
         $shipper->provider()->associate($shipper_provider)->save();

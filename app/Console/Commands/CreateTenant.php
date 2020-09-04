@@ -43,11 +43,43 @@ class CreateTenant extends Command {
     public function handle() {
 
 
-        $data=[];
-        foreach ($this->argument('data') as $arg){
-            if(preg_match('/(.+)=(.+)/',$arg,$matches)){
+        $request_data = $this->argument('data');
 
-                $data[$matches[1]]=$matches[2];
+
+        $data = [
+            'address' => [
+                'contact_name' => '',
+                'company_name' => '',
+                'phone'        => '',
+                'fax'          => '',
+                'email'        => '',
+                'type'         => 'business',
+                'tax_id'       => '',
+                'street1'      => '',
+                'street2'      => '',
+                'street3'      => '',
+                'city'         => '',
+                'state'        => '',
+                'postal_code'  => '',
+                'country'      => '',
+
+
+            ]
+        ];
+        foreach ($request_data as $arg) {
+            if (preg_match('/(.+)=(.+)/', $arg, $matches)) {
+
+                if ($matches[1] == 'address') {
+                    continue;
+                }
+
+                if (isset($data['address'][$matches[1]])) {
+                    $data['address'][$matches[1]] = $matches[2];
+                } else {
+                    $data[$matches[1]] = $matches[2];
+                }
+
+
             }
         }
 

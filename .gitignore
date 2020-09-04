@@ -5,4 +5,4 @@ Homestead.yaml
 .env
 .phpunit.result.cache
 .DS_Store
-reset.sh
+_reset.sh
