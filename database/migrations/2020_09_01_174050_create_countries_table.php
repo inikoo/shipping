@@ -21,7 +21,18 @@ class CreateCountriesTable extends Migration
         Schema::create('countries', function (Blueprint $table) {
             $table->smallIncrements('id');
             $table->string('code',2)->unique()->index();
+            $table->string('code_iso3',3)->nullable()->index();
+            $table->unsignedSmallInteger('code_iso_numeric')->nullable()->index();
+            $table->unsignedInteger('geoname_id')->nullable()->index();
+
+            $table->string('phone_code')->nullable();
+            $table->string('currency_code')->nullable();
+
             $table->string('name');
+            $table->string('continent');
+            $table->string('capital');
+            $table->string('timezone')->comment('Timezone in capital');
+
             $table->unsignedSmallInteger('shippers_count')->default(0);
             $table->jsonb('data');
             $table->timestampsTz();

@@ -14,8 +14,16 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * Class Country
  *
- * @property string $name
- * @property string $code
+ * @property string  $name
+ * @property string  $code
+ * @property string  $code_iso3
+ * @property integer $code_iso_numeric
+ * @property string  $continent
+ * @property string  $capital
+ * @property string  $timezone
+ * @property string  $phone_code
+ * @property integer $geoname_id
+ * @property array   $data
  *
  * @mixin \Illuminate\Database\Eloquent\Builder
  */
@@ -33,16 +41,14 @@ class Country extends Model {
     ];
 
 
-    protected $fillable = [
-        'name',
-        'code'
-    ];
+    //protected $fillable = [
+    //    'name',
+    //    'code'
+    //];
 
     public function shippers() {
         return $this->hasMany('App\Models\Shipper');
     }
-
-
 
 
 }

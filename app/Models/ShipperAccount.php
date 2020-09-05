@@ -20,6 +20,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property integer $tenant_id
  * @property array $credentials
  * @property array $data
+ * @property object $shipper
+
  *
  * @mixin \Illuminate\Database\Eloquent\Builder
  */
@@ -44,6 +46,17 @@ class ShipperAccount extends Model {
     ];
 
 
+    public function shipper()
+    {
+        return $this->belongsTo('App\Models\Shipper');
+    }
+
+
+    public function createLabel($request){
+
+        return $this->shipper->provider->createLabel($request);
+
+    }
 
 
 }

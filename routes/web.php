@@ -25,6 +25,7 @@ $router->group(['middleware' => 'auth'], function ($router)
 
 
     $router->post('shipper-accounts', 'ShipperAccountController@create');
+    $router->post('labels', 'LabelController@create');
 
 
 
