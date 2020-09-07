@@ -225,7 +225,7 @@ class DpdSk extends Model {
             $pickUpTimeWindow['end'] = preg_replace('/:/', '', Arr::get($pickUp, 'end'));
         }
         if ($pickUpTimeWindow == []) {
-            $pickUpTimeWindow['end'] = '1700';
+            $pickUpTimeWindow['end'] = '1600';
         }
 
         //print_r($shipTo);

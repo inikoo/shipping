@@ -47,21 +47,19 @@ class CreateTenant extends Command {
 
 
         $data = [
-            'address' => [
-                'contact_name' => '',
-                'company_name' => '',
-                'phone'        => '',
-                'fax'          => '',
-                'email'        => '',
-                'type'         => 'business',
-                'tax_id'       => '',
-                'street1'      => '',
-                'street2'      => '',
-                'street3'      => '',
-                'city'         => '',
-                'state'        => '',
-                'postal_code'  => '',
-                'country'      => '',
+            'contact'      => '',
+            'organization' => '',
+            'phone'        => '',
+            'email'        => '',
+            'address'      => [
+                'address_line_1'      => '',
+                'address_line_2'      => '',
+                'sorting_code'        => '',
+                'postal_code'         => '',
+                'locality'            => '',
+                'dependent_locality'  => '',
+                'administrative_area' => '',
+                'country_code'        => '',
 
 
             ]
