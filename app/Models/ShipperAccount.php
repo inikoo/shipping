@@ -54,7 +54,7 @@ class ShipperAccount extends Model {
 
     public function createLabel($request){
 
-        return $this->shipper->provider->createLabel($request);
+        return $this->shipper->provider->createLabel($request,$this);
 
     }
 
