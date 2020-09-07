@@ -35,8 +35,12 @@ class Handler extends ExceptionHandler
      */
     public function report(Throwable $exception)
     {
+        if (env('SENTRY_URL') && app()->bound('sentry') && $this->shouldReport($exception)) {
+            app('sentry')->captureException($exception);
+        }
         parent::report($exception);
     }
+
 
     /**
      * Render an exception into an HTTP response.
