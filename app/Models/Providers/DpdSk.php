@@ -223,8 +223,6 @@ class DpdSk extends Model {
             $pickUpTimeWindow['end'] = '1600';
         }
 
-        //print_r($shipTo);
-
         if (Arr::get($shipTo, 'organization') != '') {
             $type       = 'b2b';
             $name       = Arr::get($shipTo, 'organization');
@@ -241,17 +239,16 @@ class DpdSk extends Model {
 
 
         if (!empty($cash_on_delivery)) {
-            print_r($cash_on_delivery);
 
             $order_id = preg_replace("/[^0-9]/", "", $request->get('reference'));
-            if($order_id==''){
-                $order_id=rand(1,100);
+            if ($order_id == '') {
+                $order_id = rand(1, 100);
             }
 
-            if(Arr::get($cash_on_delivery, 'accept_card','No')=='Yes'){
-                $paymentMethod=1;
-            }else{
-                $paymentMethod=0;
+            if (Arr::get($cash_on_delivery, 'accept_card', 'No') == 'Yes') {
+                $paymentMethod = 1;
+            } else {
+                $paymentMethod = 0;
             }
 
             $services = [
@@ -261,9 +258,9 @@ class DpdSk extends Model {
                     'bankAccount'    => [
                         'id' => $this->credentials['bankID'],
                     ],
-                    'variableSymbol' =>$order_id,
-                    'paymentMethod'=>$paymentMethod,
-            ]
+                    'variableSymbol' => $order_id,
+                    'paymentMethod'  => $paymentMethod,
+                ]
             ];
         }
 
