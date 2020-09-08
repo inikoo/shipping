@@ -130,10 +130,6 @@ class DpdSk extends Model {
             'id'      => 'null',
         );
 
-
-        //print_r($params);
-        //exit;
-
         $curl = curl_init();
 
         curl_setopt_array(
@@ -145,7 +141,7 @@ class DpdSk extends Model {
                      CURLOPT_TIMEOUT        => 0,
                      CURLOPT_FOLLOWLOCATION => true,
                      CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
-                     CURLOPT_CUSTOMREQUEST  => "GET",
+                     CURLOPT_CUSTOMREQUEST  => "POST",
                      CURLOPT_POSTFIELDS     => json_encode($params),
                      CURLOPT_HTTPHEADER     => array(
                          "Content-Type: application/json"
@@ -155,8 +151,6 @@ class DpdSk extends Model {
 
 
         $response = json_decode(curl_exec($curl), true);
-
-        //print_r($response);
 
         curl_close($curl);
 
@@ -197,7 +191,7 @@ class DpdSk extends Model {
 
                 }
             } else {
-                $result['tracking_number'] = substr($res['mpsid'],0,-8);
+                $result['tracking_number'] = substr($res['mpsid'], 0, -8);
                 $result['label_link']      = $res['label'];
 
             }
@@ -233,14 +227,14 @@ class DpdSk extends Model {
         if (Arr::get($shipTo, 'organization') != '') {
             $type = 'b2b';
             $name = Arr::get($shipTo, 'organization');
+            $nameDetail= Arr::get($shipTo, 'contact');
         } else {
             $type = 'b2c';
             $name = Arr::get($shipTo, 'contact');
+            $nameDetail='';
         }
 
         $country = (new Country)->where('code', $shipTo['country_code'])->first();
-
-
 
 
         return array(
@@ -256,18 +250,19 @@ class DpdSk extends Model {
                 'id' => $this->credentials['pickupID'],
             ),
             'addressRecipient' => array(
-                'type'    => $type,
-                'name'    => $name,
-                'street'  => Arr::get($shipTo, 'address_line_1'),
-                //   'houseNumber' => '4',
-                'zip'     => trim(Arr::get($shipTo, 'sorting_code').' '.Arr::get($shipTo, 'postal_code')),
-                'country' => $country->code_iso_numeric,
-                'city'    => Arr::get($shipTo, 'locality'),
-                'phone'   => Arr::get($shipTo, 'phone'),
-                'email'   => Arr::get($shipTo, 'email'),
-                'note'    => 'test',
+                'type'         => $type,
+                'name'         => $name,
+                'nameDetail'   => $nameDetail,
+                'street'       => Arr::get($shipTo, 'address_line_1'),
+                'streetDetail' => Arr::get($shipTo, 'address_line_2'),
+                'zip'          => trim(Arr::get($shipTo, 'sorting_code').' '.Arr::get($shipTo, 'postal_code')),
+                'country'      => $country->code_iso_numeric,
+                'city'         => Arr::get($shipTo, 'locality'),
+                'phone'        => Arr::get($shipTo, 'phone'),
+                'email'        => Arr::get($shipTo, 'email'),
+                'note'         => '',
             ),
-            'parcels'          => ['parcel'=>$parcels],
+            'parcels'          => ['parcel' => $parcels],
             'services'         => array(),
         );
     }
