@@ -106,9 +106,10 @@ class DpdSk extends Model {
         $parcels           = json_decode($request->get('parcels'), true);
         $shipTo            = json_decode($request->get('ship_to'), true);
         $pickUp            = json_decode($request->get('pick_up'), true);
+        $cash_on_delivery  = json_decode($request->get('cod', '{}'), true);
 
         $shipment = $this->prepareShipment(
-            $request, $pickUp, $shipTo, $parcels
+            $request, $pickUp, $shipTo, $parcels, $cash_on_delivery
 
         );
 
@@ -202,7 +203,7 @@ class DpdSk extends Model {
 
     }
 
-    private function prepareShipment($request, $pickUp, $shipTo, $parcels) {
+    private function prepareShipment($request, $pickUp, $shipTo, $parcels, $cash_on_delivery) {
 
         try {
             $pickup_date = new Carbon(Arr::get($pickUp, 'date'));
@@ -225,16 +226,46 @@ class DpdSk extends Model {
         //print_r($shipTo);
 
         if (Arr::get($shipTo, 'organization') != '') {
-            $type = 'b2b';
-            $name = Arr::get($shipTo, 'organization');
-            $nameDetail= Arr::get($shipTo, 'contact');
+            $type       = 'b2b';
+            $name       = Arr::get($shipTo, 'organization');
+            $nameDetail = Arr::get($shipTo, 'contact');
         } else {
-            $type = 'b2c';
-            $name = Arr::get($shipTo, 'contact');
-            $nameDetail='';
+            $type       = 'b2c';
+            $name       = Arr::get($shipTo, 'contact');
+            $nameDetail = '';
         }
 
         $country = (new Country)->where('code', $shipTo['country_code'])->first();
+
+        $services = [];
+
+
+        if (!empty($cash_on_delivery)) {
+            print_r($cash_on_delivery);
+
+            $order_id = preg_replace("/[^0-9]/", "", $request->get('reference'));
+            if($order_id==''){
+                $order_id=rand(1,100);
+            }
+
+            if(Arr::get($cash_on_delivery, 'accept_card','No')=='Yes'){
+                $paymentMethod=1;
+            }else{
+                $paymentMethod=0;
+            }
+
+            $services = [
+                'cod' => [
+                    'amount'         => $cash_on_delivery['amount'],
+                    'currency'       => $cash_on_delivery['currency'],
+                    'bankAccount'    => [
+                        'id' => $this->credentials['bankID'],
+                    ],
+                    'variableSymbol' =>$order_id,
+                    'paymentMethod'=>$paymentMethod,
+            ]
+            ];
+        }
 
 
         return array(
@@ -263,8 +294,10 @@ class DpdSk extends Model {
                 'note'         => '',
             ),
             'parcels'          => ['parcel' => $parcels],
-            'services'         => array(),
+            'services'         => $services
         );
+
+
     }
 
 }

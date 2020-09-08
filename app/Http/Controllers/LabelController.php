@@ -20,6 +20,7 @@ class LabelController extends Controller {
      * @param \Illuminate\Http\Request $request
      *
      * @return \Illuminate\Http\JsonResponse
+     * @throws \Exception
      */
     public function create(Request $request) {
 
@@ -44,6 +45,11 @@ class LabelController extends Controller {
                                'pick_up'            => [
                                    'required',
                                    'json'
+                               ],
+                               'cod'                => [
+                                   'sometimes',
+                                   'required',
+                                   'json'
                                ]
 
                            ]
@@ -56,14 +62,14 @@ class LabelController extends Controller {
 
         $parcels = json_decode($request->get('parcels'), true);
         $shipTo  = json_decode($request->get('ship_to'), true);
-        $pick_up  = json_decode($request->get('pick_up'), true);
+        $pick_up = json_decode($request->get('pick_up'), true);
 
 
         $validator = Validator::make(
             [
                 'parcels' => $parcels,
                 'shipTo'  => $shipTo,
-                'pick_up'  => $pick_up
+                'pick_up' => $pick_up
 
             ], [
                 'parcels.*.reference' => [
@@ -72,42 +78,44 @@ class LabelController extends Controller {
                     'numeric'
                 ],
 
-                'parcels.*.weight' => [
+                'parcels.*.weight'    => [
                     'required',
                     'numeric'
                 ],
-                'parcels.*.height' => [
+                'parcels.*.height'    => [
                     'required',
                     'numeric'
                 ],
-                'parcels.*.width'  => [
+                'parcels.*.width'     => [
                     'required',
                     'numeric'
                 ],
-                'parcels.*.depth'  => [
+                'parcels.*.depth'     => [
                     'required',
                     'numeric'
                 ],
-                'shipTo.country_code'  => [
-                    'required','exists:countries,code'
+                'shipTo.country_code' => [
+                    'required',
+                    'exists:countries,code'
                 ],
-                'pick_up.date'  => [
-                    'sometimes','required','after_or_equal:today'
+                'pick_up.date'        => [
+                    'sometimes',
+                    'required',
+                    'after_or_equal:today'
                 ],
-                'pick_up.start'  => [
-                    'sometimes','required','date_format:H:i'
+                'pick_up.start'       => [
+                    'sometimes',
+                    'required',
+                    'date_format:H:i'
                 ],
-                'pick_up.end'  => [
-                    'sometimes','required','date_format:H:i'
+                'pick_up.end'         => [
+                    'sometimes',
+                    'required',
+                    'date_format:H:i'
                 ],
 
             ]
         );
-
-
-        //'pickup_date'            => [
-        //    'required','after_or_equal:today'
-        //],
 
 
         if ($validator->fails()) {
@@ -115,26 +123,29 @@ class LabelController extends Controller {
         }
 
 
-
-
         /**
          * @var $shipper_account \App\Models\ShipperAccount
          */
         $shipper_account = (new ShipperAccount)->find($request->get('shipper_account_id'))->first();
 
-        $response=$shipper_account->createLabel($request);
+        $response = $shipper_account->createLabel($request);
 
-        $status=$response['status'];
+        $status = $response['status'];
         unset($response['status']);
 
-        if(count($response['errors'])>0){
-            throw new Exception(json_encode($response['errors']));
-            //return response()->json(['errors' =>$response['errors']], $status);
+        if (count($response['errors']) > 0) {
+            if (env('SENTRY_URL')) {
+                throw new Exception(json_encode($response['errors']));
+
+            } else {
+                return response()->json(['errors' => $response['errors']], $status);
+
+            }
 
         }
         unset($response['errors']);
-        return response()->json($response,$status);
 
+        return response()->json($response, $status);
 
 
     }
