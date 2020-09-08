@@ -8,6 +8,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ShipperAccount;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -127,7 +128,8 @@ class LabelController extends Controller {
         unset($response['status']);
 
         if(count($response['errors'])>0){
-            return response()->json(['errors' =>$response['errors']], $status);
+            throw new Exception(json_encode($response['errors']));
+            //return response()->json(['errors' =>$response['errors']], $status);
 
         }
         unset($response['errors']);
