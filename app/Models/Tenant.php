@@ -13,9 +13,10 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class Tenant
- *
+ * @property integer $id
  * @property string $slug
  * @property string $name
+ * @property array $data
  *
  * @mixin \Illuminate\Database\Eloquent\Builder
  */

@@ -26,23 +26,7 @@ class Postmen extends model {
     protected $table = 'postmen_shipper_providers';
 
 
-    protected $casts = [
-        'data' => 'array'
-    ];
 
-    protected $attributes = [
-        'data' => '{}',
-    ];
-
-
-    protected $fillable = [
-        'slug',
-    ];
-
-
-    public function shipper() {
-        return $this->morphone('app\models\shipper', 'provider');
-    }
 
 
     public function createShipperAccount(request $request) {
@@ -90,11 +74,11 @@ class Postmen extends model {
 
         curl_setopt_array(
             $curl, array(
-                     curlopt_returntransfer => true,
-                     curlopt_url            => $url,
-                     curlopt_customrequest  => $method,
-                     curlopt_httpheader     => $headers,
-                     curlopt_postfields     => $body
+                     CURLOPT_RETURNTRANSFER => true,
+                     CURLOPT_URL            => $url,
+                     CURLOPT_CUSTOMREQUEST  => $method,
+                     CURLOPT_HTTPHEADER     => $headers,
+                     CURLOPT_POSTFIELDS     => $body
                  )
         );
 

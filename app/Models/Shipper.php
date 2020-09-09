@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * Class Shipper
  *
+ * @property integer $id
  * @property string $slug
  * @property string $name
  *
