@@ -6,6 +6,7 @@
  */
 
 use App\Models\Providers\DpdSk;
+use App\Models\Providers\GlsSk;
 use App\Models\Providers\Postmen;
 use Illuminate\Database\Seeder;
 
@@ -33,6 +34,13 @@ class ShipperProvidersSeeder extends Seeder {
             print "DPD SK Model v2-json already in the database\n";
         }
 
+        try{
+            $postmen_shipper_provider       = new GlsSk;
+            $postmen_shipper_provider->slug = 'MyGLS-v1';
+            $postmen_shipper_provider->save();
+        }catch (Exception $e){
+            print "GLS SK Model MyGLS-v1 already in the database\n";
+        }
 
 
     }

@@ -8,7 +8,11 @@
 namespace App\Models\Providers;
 
 
+use App\Models\ShipperAccount;
+use App\Models\Tenant;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 
 /**
@@ -36,12 +40,51 @@ class GlsSk extends Model {
         'slug',
     ];
 
-    public function shipper()
-    {
+    public function shipper() {
         return $this->morphOne('App\Models\Shipper', 'provider');
     }
 
+    public function createShipperAccount(Request $request) {
 
+        $credentials_rules = [
+            'username' => [
+                'required',
+                'email'
+            ],
+            'password'  => ['required'],
+            'client_number' => ['required','numeric'],
+
+        ];
+
+        $credentials_validator = Validator::make(
+            $request->all(), $credentials_rules
+        );
+
+        if ($credentials_validator->fails()) {
+            return response()->json(['errors' => $credentials_validator->errors()]);
+        }
+
+        $credentials = [];
+        foreach ($credentials_rules as $credential_field => $foo) {
+            $credentials[$credential_field] = $request->get($credential_field);
+        }
+        $credentials = array_filter($credentials);
+
+
+        $tenant = (new Tenant)->where('slug', $request->get('tenant'))->first();
+
+        $shipperAccount              = new ShipperAccount;
+        $shipperAccount->slug        = $request->get('shipper');
+        $shipperAccount->label       = $request->get('label');
+        $shipperAccount->shipper_id  = $this->shipper->id;
+        $shipperAccount->tenant_id   = $tenant->id;
+        $shipperAccount->credentials = $credentials;
+        $shipperAccount->save();
+
+        return $shipperAccount;
+
+
+    }
 
 
 }

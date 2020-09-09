@@ -9,6 +9,7 @@ namespace App\Console\Commands;
 
 use App\Models\Country;
 use App\Models\Providers\DpdSk;
+use App\Models\Providers\GlsSk;
 use App\Models\Providers\Postmen;
 use App\Models\Shipper;
 use Illuminate\Console\Command;
@@ -45,9 +46,6 @@ class CreateShipper extends Command {
     public function handle() {
 
 
-        /**
-         * @var $shipper Shipper
-         */
         $shipper = new Shipper(
             [
                 'slug' => $this->argument('slug'),
@@ -63,6 +61,9 @@ class CreateShipper extends Command {
         switch ($this->argument('provider')) {
             case 'dpd-sk':
                 $shipper_provider = (new DpdSk)->where('slug', 'v2-json')->first();
+                break;
+            case 'gls-sk':
+                $shipper_provider = (new GlsSk)->where('slug', 'MyGLS-v1')->first();
                 break;
             default:
                 $shipper_provider = (new Postmen)->where('slug', 'v3')->first();

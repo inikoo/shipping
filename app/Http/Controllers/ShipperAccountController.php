@@ -47,12 +47,19 @@ class ShipperAccountController extends Controller {
             return response()->json(['errors'=>$validator->errors()],422);
         }
 
+
+
+
         $shipper= (new Shipper)->where('slug', $request->get('shipper'))->first();
+
+        print_r($shipper);
 
         try {
             $shipper_account = $shipper->provider->createShipperAccount($request);
             return response()->json(['shipper-account-id'=>$shipper_account->id]);
         } catch (Exception $e) {
+
+
             return response()->json(['errors'=>$e->getMessage()],400);
         }
 
