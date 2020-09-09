@@ -25,42 +25,43 @@ class ShipperAccountController extends Controller {
     public function create(Request $request) {
 
 
-        $validator = Validator::make($request->all(), [
-            'tenant' => [
+        $validator = Validator::make(
+            $request->all(), [
+            'tenant'  => [
                 'required',
-                Rule::exists('tenants','slug')->where(function ($query) {
-                    $query->where('user_id', auth()->user()->id);
-                }),
+                Rule::exists('tenants', 'slug')->where(
+                    function ($query) {
+                        $query->where('user_id', auth()->user()->id);
+                    }
+                ),
             ],
             'shipper' => [
                 'required',
                 'exists:shippers,slug',
                 'unique:shipper_accounts,slug'
             ],
-            'label' => [
+            'label'   => [
                 'required'
             ],
-        ]);
+        ]
+        );
 
 
         if ($validator->fails()) {
-            return response()->json(['errors'=>$validator->errors()],422);
+            return response()->json(['errors' => $validator->errors()], 422);
         }
 
 
-
-
-        $shipper= (new Shipper)->where('slug', $request->get('shipper'))->first();
-
-        print_r($shipper);
+        $shipper = (new Shipper)->where('slug', $request->get('shipper'))->first();
 
         try {
             $shipper_account = $shipper->provider->createShipperAccount($request);
-            return response()->json(['shipper-account-id'=>$shipper_account->id]);
+
+            return response()->json(['shipper-account-id' => $shipper_account->id]);
         } catch (Exception $e) {
 
 
-            return response()->json(['errors'=>$e->getMessage()],400);
+            return response()->json(['errors' => $e->getMessage()], 400);
         }
 
 
