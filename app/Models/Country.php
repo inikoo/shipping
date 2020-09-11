@@ -41,11 +41,6 @@ class Country extends Model {
     ];
 
 
-    //protected $fillable = [
-    //    'name',
-    //    'code'
-    //];
-
     public function shippers() {
         return $this->hasMany('App\Models\Shipper');
     }

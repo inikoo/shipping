@@ -51,12 +51,22 @@ class ShipperAccount extends Model {
         return $this->belongsTo('App\Models\Shipper');
     }
 
+    public function tenant()
+    {
+        return $this->belongsTo('App\Models\Tenant');
+    }
+
 
     public function createLabel($request){
 
         return $this->shipper->provider->createLabel($request,$this);
 
     }
+
+    public function pdf_labels() {
+        return $this->hasMany('App\Models\PdfLabel');
+    }
+
 
 
 }

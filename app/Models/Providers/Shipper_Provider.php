@@ -18,7 +18,8 @@ use Illuminate\Support\Facades\Validator;
  *
  * @property array               $credentials_rules
  * @property \App\Models\Shipper $shipper
- *
+ * @property array  $credentials
+
  * @mixin \Illuminate\Database\Eloquent\Builder
  * @package App\Models\Providers
  */
@@ -64,8 +65,6 @@ class Shipper_Provider extends Model {
         $tenant = (new Tenant)->where('slug', $request->get('tenant'))->first();
 
 
-
-
         $shipperAccount              = new ShipperAccount;
         $shipperAccount->slug        = $request->get('shipper');
         $shipperAccount->label       = $request->get('label');
@@ -79,5 +78,81 @@ class Shipper_Provider extends Model {
 
     }
 
+    public function call_api($url, $params) {
+
+        $curl = curl_init();
+
+        curl_setopt_array(
+            $curl, array(
+                     CURLOPT_URL            => $url,
+                     CURLOPT_RETURNTRANSFER => true,
+                     CURLOPT_ENCODING       => "",
+                     CURLOPT_MAXREDIRS      => 10,
+                     CURLOPT_TIMEOUT        => 0,
+                     CURLOPT_FOLLOWLOCATION => true,
+                     CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
+                     CURLOPT_CUSTOMREQUEST  => "POST",
+                     CURLOPT_POSTFIELDS     => json_encode($params),
+                     CURLOPT_HTTPHEADER     => array(
+                         "Content-Type: application/json"
+                     ),
+                 )
+        );
+
+        $raw_response = curl_exec($curl);
+
+        $data = json_decode($raw_response, true);
+
+        $response = [
+            'status' => curl_getinfo($curl, CURLINFO_HTTP_CODE),
+            'data'   => $data
+        ];
+
+
+        if ($raw_response === false) {
+            $response['errors'][] = ['curl_fail' => curl_error($curl).' ('.curl_errno($curl).')'];
+            $response['status']   = 530;
+            curl_close($curl);
+
+            return $response;
+        }
+        curl_close($curl);
+
+        if ($data == null) {
+            $response['errors'][] = ['fail' => 'The API server returned an empty, unknown, or unexplained response'];
+            $response['status']   = 530;
+
+        }
+
+
+        return $response;
+    }
+
+
+    public function get_shipment_parameters(Request $request, ShipperAccount $shipperAccount) {
+
+
+        $parcels           = json_decode($request->get('parcels'), true);
+        $shipTo            = json_decode($request->get('ship_to'), true);
+        $pickUp            = json_decode($request->get('pick_up'), true);
+        $cash_on_delivery  = json_decode($request->get('cod', '{}'), true);
+
+
+        return $this->prepareShipment(
+            $shipperAccount,
+            $request,
+            $pickUp,
+            $shipTo,
+            $parcels,
+            $cash_on_delivery
+
+        );
+
+
+    }
+
+    function prepareShipment( $shipperAccount,$request, $pickUp, $shipTo, $parcels, $cash_on_delivery){
+        //
+    }
 
 }

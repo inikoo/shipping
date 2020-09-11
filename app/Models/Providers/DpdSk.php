@@ -11,7 +11,6 @@ namespace App\Models\Providers;
 use App\Models\Country;
 use App\Models\ShipperAccount;
 use Exception;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Carbon\Carbon;
@@ -25,10 +24,12 @@ use Carbon\Carbon;
  * @property array  $credentials
  * @mixin \Illuminate\Database\Eloquent\Builder
  */
-class DpdSk extends Model {
+class DpdSk extends Shipper_Provider {
 
 
     protected $table = 'dpd_sk_shipper_providers';
+
+    protected $api_url ="https://api.dpdportal.sk/shipment";
 
     protected $credentials_rules = [
         'apiKey'   => ['required'],
@@ -46,85 +47,41 @@ class DpdSk extends Model {
 
     public function createLabel(Request $request, ShipperAccount $shipperAccount) {
 
-        $result = [
-            'errors' => [],
-            'status' => 200
-
-
-        ];
-
-        $this->credentials = $shipperAccount->credentials;
-        $parcels           = json_decode($request->get('parcels'), true);
-        $shipTo            = json_decode($request->get('ship_to'), true);
-        $pickUp            = json_decode($request->get('pick_up'), true);
-        $cash_on_delivery  = json_decode($request->get('cod', '{}'), true);
-
-        $shipment = $this->prepareShipment(
-            $request, $pickUp, $shipTo, $parcels, $cash_on_delivery
-
-        );
-
         $params = array(
             'jsonrpc' => '2.0',
             'method'  => 'create',
             'params'  => array(
                 'DPDSecurity' => array(
                     'SecurityToken' => array(
-                        'ClientKey' => $this->credentials['apiKey'],
-                        'Email'     => $this->credentials['username'],
+                        'ClientKey' => $shipperAccount->credentials['apiKey'],
+                        'Email'     => $shipperAccount->credentials['username'],
                     ),
                 ),
-                'shipment'    => array(
-                    0 => $shipment
-
-                ),
+                'shipment'    => [$this->get_shipment_parameters($request,$shipperAccount)],
             ),
             'id'      => 'null',
         );
 
-        $curl = curl_init();
-
-        curl_setopt_array(
-            $curl, array(
-                     CURLOPT_URL            => "https://api.dpdportal.sk/shipment",
-                     CURLOPT_RETURNTRANSFER => true,
-                     CURLOPT_ENCODING       => "",
-                     CURLOPT_MAXREDIRS      => 10,
-                     CURLOPT_TIMEOUT        => 0,
-                     CURLOPT_FOLLOWLOCATION => true,
-                     CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
-                     CURLOPT_CUSTOMREQUEST  => "POST",
-                     CURLOPT_POSTFIELDS     => json_encode($params),
-                     CURLOPT_HTTPHEADER     => array(
-                         "Content-Type: application/json"
-                     ),
-                 )
-        );
 
 
-        $response = json_decode(curl_exec($curl), true);
 
-        curl_close($curl);
+        $apiResponse = $this->call_api($this->api_url, $params);
 
-        if ($response == null) {
-            $result['errors'][] = ['fail' => 'The API server returned an empty, unknown, or unexplained response'];
-            $result['status']   = 530;
 
-            return $result;
-        }
 
-        if (!empty($response['error'])) {
+        $result=[];
+        if (!empty($apiResponse['data']['error'])) {
 
-            if ($response['error']['code'] == 103) {
-                $result['errors'][] = ['authentication' => $response['error']['message']];
+            if ($apiResponse['data']['error']['code'] == 103) {
+                $result['errors'][] = ['authentication' => $apiResponse['data']['error']['message']];
                 $result['status']   = 401;
-            } elseif ($response['error']['code'] == 401 or $response['error']['code'] == 519) {
+            } elseif ($apiResponse['data']['error']['code'] == 401 or $apiResponse['data']['error']['code'] == 519) {
 
-                $msg = $response['error']['message'];
+                $msg = $apiResponse['data']['error']['message'];
 
 
-                if (isset($response['error']['data']['additional_details'])) {
-                    $msg .= ' '.$response['error']['data']['additional_details'];
+                if (isset($apiResponse['data']['error']['data']['additional_details'])) {
+                    $msg .= ' '.$apiResponse['data']['error']['data']['additional_details'];
                 }
 
                 $result['errors'][] = ['invalid' => $msg];
@@ -134,7 +91,7 @@ class DpdSk extends Model {
 
         } else {
 
-            $res = array_pop($response['result'])[0];
+            $res = array_pop($apiResponse['data']['result'])[0];
             if (!$res['success']) {
                 $result['status'] = 422;
                 foreach ($res['messages'] as $error) {
@@ -154,7 +111,7 @@ class DpdSk extends Model {
 
     }
 
-    private function prepareShipment($request, $pickUp, $shipTo, $parcels, $cash_on_delivery) {
+     function prepareShipment( $shipperAccount,$request, $pickUp, $shipTo, $parcels, $cash_on_delivery) {
 
         try {
             $pickup_date = new Carbon(Arr::get($pickUp, 'date'));
@@ -207,7 +164,7 @@ class DpdSk extends Model {
                     'amount'         => $cash_on_delivery['amount'],
                     'currency'       => $cash_on_delivery['currency'],
                     'bankAccount'    => [
-                        'id' => $this->credentials['bankID'],
+                        'id' => $shipperAccount->credentials['bankID'],
                     ],
                     'variableSymbol' => $order_id,
                     'paymentMethod'  => $paymentMethod,
@@ -218,7 +175,7 @@ class DpdSk extends Model {
 
         return array(
             'reference'        => $request->get('reference'),
-            'delisId'          => $this->credentials['delisId'],
+            'delisId'          => $shipperAccount->credentials['delisId'],
             'note'             => $request->get('note'),
             'product'          => $request->get('shipping_product', 1),
             'pickup'           => array(
@@ -226,7 +183,7 @@ class DpdSk extends Model {
                 'timeWindow' => $pickUpTimeWindow
             ),
             'addressSender'    => array(
-                'id' => $this->credentials['pickupID'],
+                'id' => $shipperAccount->credentials['pickupID'],
             ),
             'addressRecipient' => array(
                 'type'         => $type,
@@ -249,3 +206,49 @@ class DpdSk extends Model {
     }
 
 }
+
+/*
+ *
+ *   return [
+            'ClientNumber'    => $this->credentials['client_number'],
+            'ClientReference' => $request->get('reference'),
+            'CODAmount'       => 0,
+            'CODReference'    => $request->get('reference'),
+            'Content'         => 'CONTENT',
+            'Count'           => 1,
+            'DeliveryAddress' => array(
+                'City'           => Arr::get($shipTo, 'locality'),
+                'ContactEmail'   => Arr::get($shipTo, 'email'),
+                'ContactName'    => Arr::get($shipTo, 'contact'),
+                'ContactPhone'   => Arr::get($shipTo, 'phone','+36701234567'),
+                'CountryIsoCode' => Arr::get($shipTo, 'country_code'),
+                'HouseNumber'     => '1',
+                'Name'           => Arr::get($shipTo, 'organization', Arr::get($shipTo, 'contact')),
+                'Street'         => trim(Arr::get($shipTo, 'address_line_1').' '.Arr::get($shipTo, 'address_line_2')),
+                'ZipCode'        => trim(Arr::get($shipTo, 'sorting_code').' '.Arr::get($shipTo, 'postal_code')),
+                 'HouseNumberInfo' => '1',
+            ),
+            'PickupAddress'   => array(
+                'City'            => 'Alsónémedi',
+                'ContactEmail'    => 'something@anything.hu',
+                'ContactName'     => 'Contact Name',
+                'ContactPhone'    => '+36701234567',
+                'CountryIsoCode'  => 'HU',
+                'HouseNumber'     => '2',
+                'Name'            => 'Pickup Address',
+                'Street'          => 'Európa u.',
+                'ZipCode'         => '2351',
+                'HouseNumberInfo' => '/a',
+            ),
+            'PickupDate'      => $pickupDate,
+            'ServiceList'     => array(
+                0 => array(
+                    'Code'         => 'PSD',
+                    'PSDParameter' => array(
+                        'StringValue' => '2351-CSOMAGPONT',
+                    ),
+                ),
+            ),
+
+        ];
+ */
