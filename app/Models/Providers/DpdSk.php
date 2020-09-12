@@ -111,7 +111,7 @@ class DpdSk extends Shipper_Provider {
 
     }
 
-     function prepareShipment( $shipperAccount,$request, $pickUp, $shipTo, $parcels, $cash_on_delivery) {
+     function prepareShipment( $shipperAccount,$request, $pickUp, $shipTo, $parcelsData, $cash_on_delivery) {
 
         try {
             $pickup_date = new Carbon(Arr::get($pickUp, 'date'));
@@ -198,7 +198,7 @@ class DpdSk extends Shipper_Provider {
                 'email'        => Arr::get($shipTo, 'email'),
                 'note'         => '',
             ),
-            'parcels'          => ['parcel' => $parcels],
+            'parcels'          => ['parcel' => $parcelsData],
             'services'         => $services
         );
 
