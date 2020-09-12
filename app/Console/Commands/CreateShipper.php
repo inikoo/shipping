@@ -12,6 +12,7 @@ use App\Models\Providers\DpdSk;
 use App\Models\Providers\GlsSk;
 use App\Models\Providers\Postmen;
 use App\Models\Shipper;
+use Exception;
 use Illuminate\Console\Command;
 
 class CreateShipper extends Command {
@@ -42,10 +43,14 @@ class CreateShipper extends Command {
      * Execute the console command.
      *
      * @return int
+     * @throws \Exception
      */
     public function handle() {
 
 
+        /**
+         * @var $shipper Shipper
+         */
         $shipper = new Shipper(
             [
                 'slug' => $this->argument('slug'),
@@ -65,8 +70,14 @@ class CreateShipper extends Command {
             case 'gls-sk':
                 $shipper_provider = (new GlsSk)->where('slug', 'MyGLS-v1')->first();
                 break;
-            default:
+            case 'postmen-devel':
+                $shipper_provider = (new Postmen)->where('slug', 'v3-devel')->first();
+                break;
+            case 'postmen':
                 $shipper_provider = (new Postmen)->where('slug', 'v3')->first();
+                break;
+            default:
+                throw new Exception('No provider found');
 
         }
 

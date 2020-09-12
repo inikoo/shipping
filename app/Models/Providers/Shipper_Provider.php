@@ -19,11 +19,13 @@ use Illuminate\Support\Facades\Validator;
  * @property array               $credentials_rules
  * @property \App\Models\Shipper $shipper
  * @property array  $credentials
+ * @property mixed  $errors
 
  * @mixin \Illuminate\Database\Eloquent\Builder
  * @package App\Models\Providers
  */
 class Shipper_Provider extends Model {
+
 
 
     protected $casts = [
@@ -52,7 +54,9 @@ class Shipper_Provider extends Model {
         );
 
         if ($credentials_validator->fails()) {
-            return response()->json(['errors' => $credentials_validator->errors()]);
+            $this->errors=$credentials_validator->errors();
+            return false;
+
         }
 
         $credentials = [];
@@ -108,7 +112,6 @@ class Shipper_Provider extends Model {
             'data'   => $data
         ];
 
-
         if ($raw_response === false) {
             $response['errors'][] = ['curl_fail' => curl_error($curl).' ('.curl_errno($curl).')'];
             $response['status']   = 530;
@@ -121,9 +124,7 @@ class Shipper_Provider extends Model {
         if ($data == null) {
             $response['errors'][] = ['fail' => 'The API server returned an empty, unknown, or unexplained response'];
             $response['status']   = 530;
-
         }
-
 
         return $response;
     }

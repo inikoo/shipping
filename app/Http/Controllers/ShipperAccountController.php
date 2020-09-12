@@ -24,7 +24,6 @@ class ShipperAccountController extends Controller {
      */
     public function create(Request $request) {
 
-
         $validator = Validator::make(
             $request->all(), [
             'tenant'  => [
@@ -51,13 +50,14 @@ class ShipperAccountController extends Controller {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-
         $shipper = (new Shipper)->where('slug', $request->get('shipper'))->first();
 
         try {
-            $shipper_account = $shipper->provider->createShipperAccount($request);
-
-            return response()->json(['shipper-account-id' => $shipper_account->id]);
+            if($shipper_account = $shipper->provider->createShipperAccount($request)){
+                return response()->json(['shipper-account-id' => $shipper_account->id]);
+            }else{
+                return response()->json(['errors' => $shipper->provider->errors ]);
+            }
         } catch (Exception $e) {
 
 

@@ -8,37 +8,40 @@
 namespace App\Models\Providers;
 
 
+use App\Models\Country;
+use App\Models\ShipperAccount;
 use App\Models\Tenant;
 use Illuminate\Http\Request;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Validator;
 
 
 /**
  * Class Postmen
  *
- * @property string $slug
+ * @property string                                                                                     $slug
+ * @property \Illuminate\Database\Eloquent\HigherOrderBuilderProxy|\Illuminate\Support\MessageBag|mixed errors
  *
  * @mixin \Illuminate\Database\Eloquent\Builder
  */
-class Postmen extends model {
+class Postmen extends Shipper_Provider {
 
     protected $table = 'postmen_shipper_providers';
 
 
-
-
-
     public function createShipperAccount(request $request) {
 
-        $url = env('postmen_api_url').'shipper-accounts';
+
+        $url = env('POSTMEN_API_URL').'shipper-accounts';
 
 
         $credentials_rules     = $this->get_credentials_validation($request->get('shipper'));
         $credentials_validator = validator::make($request->all(), $credentials_rules);
         if ($credentials_validator->fails()) {
 
-            return response()->json(['errors' => $credentials_validator->errors()]);
+
+            $this->errors=$credentials_validator->errors();
+            return false;
         }
 
         $credentials = [];
@@ -49,49 +52,78 @@ class Postmen extends model {
 
         $tenant = (new tenant)->where('slug', $request->get('tenant'))->first();
 
+        $tenant_address = $tenant->data['address'];
+        $country = (new Country)->where('code',$tenant_address['country_code'])->first();
 
-        $address = array_filter($tenant->data['address']);
+
+        $address=[
+            'country'=>$country->code_iso3,
+            'street1'=>Arr::get($tenant_address,'address_line_1'),
+            'street2'=>Arr::get($tenant_address,'address_line_2'),
+            'city'=>Arr::get($tenant_address,'locality'),
+            'postal_code'=>Arr::get($tenant_address,'postal_code'),
+            'email'=>Arr::get($tenant->data,'email'),
+            'phone'=>Arr::get($tenant->data,'phone'),
+            'contact_name'=>Arr::get($tenant->data,'contact'),
+            'company_name'=>Arr::get($tenant->data,'organization'),
+
+        ];
+        $address = array_filter($address);
+
 
 
         $data = [
             'slug'        => $request->get('shipper'),
-            'description' => $request->get('description'),
+            'description' => $request->get('label'),
             'address'     => $address,
-            'timezone'    => 'utc',
+            'timezone'    => 'UTC',
             'credentials' => $credentials
         ];
 
 
-        $method  = 'post';
+
         $headers = array(
             "content-type: application/json",
-            "postmen-api-key: ".env('postmen_api_key')
+            "postmen-api-key: "."215365e0-a689-4190-8fca-04dd55234466"
         );
 
-        $body = json_encode($data);
 
         $curl = curl_init();
-
         curl_setopt_array(
             $curl, array(
                      CURLOPT_RETURNTRANSFER => true,
                      CURLOPT_URL            => $url,
-                     CURLOPT_CUSTOMREQUEST  => $method,
+                     CURLOPT_CUSTOMREQUEST  => 'POST',
                      CURLOPT_HTTPHEADER     => $headers,
-                     CURLOPT_POSTFIELDS     => $body
+                     CURLOPT_POSTFIELDS     => json_encode($data)
                  )
         );
 
-        $response = curl_exec($curl);
+        $response = json_decode(curl_exec($curl),true);
         $err      = curl_error($curl);
+
+
 
         curl_close($curl);
 
-        if ($err) {
-            return "curl error #:".$err;
-        } else {
-            return $response;
+        if ($err or !$response) {
+            $this->errors=[$err];
+            return false;
+        } elseif( $response['meta']['code']!=200 ) {
+            $this->errors=[$response];
+            return false;
         }
+
+        $shipperAccount              = new ShipperAccount;
+        $shipperAccount->slug        = $request->get('shipper');
+        $shipperAccount->label       = $request->get('label');
+        $shipperAccount->shipper_id  = $this->shipper->id;
+        $shipperAccount->tenant_id   = $tenant->id;
+        $shipperAccount->data = $response['data'];
+        $shipperAccount->save();
+
+        return $shipperAccount;
+
 
     }
 
@@ -100,6 +132,13 @@ class Postmen extends model {
         switch ($slug) {
             case 'dpd':
                 return ['slid' => ['required']];
+
+            case 'apc-overnight':
+                return [
+                    'password' => ['required'],
+                    'user_email' => ['required'],
+
+                ];
             default:
                 return [];
         }
