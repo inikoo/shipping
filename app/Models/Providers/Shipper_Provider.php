@@ -18,14 +18,12 @@ use Illuminate\Support\Facades\Validator;
  *
  * @property array               $credentials_rules
  * @property \App\Models\Shipper $shipper
- * @property array  $credentials
- * @property mixed  $errors
-
+ * @property array               $credentials
+ * @property mixed               $errors
  * @mixin \Illuminate\Database\Eloquent\Builder
  * @package App\Models\Providers
  */
 class Shipper_Provider extends Model {
-
 
 
     protected $casts = [
@@ -54,7 +52,8 @@ class Shipper_Provider extends Model {
         );
 
         if ($credentials_validator->fails()) {
-            $this->errors=$credentials_validator->errors();
+            $this->errors = $credentials_validator->errors();
+
             return false;
 
         }
@@ -82,7 +81,7 @@ class Shipper_Provider extends Model {
 
     }
 
-    public function call_api($url, $params) {
+    public function call_api($url, $headers, $params) {
 
         $curl = curl_init();
 
@@ -97,9 +96,7 @@ class Shipper_Provider extends Model {
                      CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
                      CURLOPT_CUSTOMREQUEST  => "POST",
                      CURLOPT_POSTFIELDS     => json_encode($params),
-                     CURLOPT_HTTPHEADER     => array(
-                         "Content-Type: application/json"
-                     ),
+                     CURLOPT_HTTPHEADER     => $headers,
                  )
         );
 
@@ -133,26 +130,21 @@ class Shipper_Provider extends Model {
     public function get_shipment_parameters(Request $request, ShipperAccount $shipperAccount) {
 
 
-        $parcels           = json_decode($request->get('parcels'), true);
-        $shipTo            = json_decode($request->get('ship_to'), true);
-        $pickUp            = json_decode($request->get('pick_up'), true);
-        $cash_on_delivery  = json_decode($request->get('cod', '{}'), true);
+        $parcels          = json_decode($request->get('parcels'), true);
+        $shipTo           = json_decode($request->get('ship_to'), true);
+        $pickUp           = json_decode($request->get('pick_up'), true);
+        $cash_on_delivery = json_decode($request->get('cod', '{}'), true);
 
 
         return $this->prepareShipment(
-            $shipperAccount,
-            $request,
-            $pickUp,
-            $shipTo,
-            $parcels,
-            $cash_on_delivery
+            $shipperAccount, $request, $pickUp, $shipTo, $parcels, $cash_on_delivery
 
         );
 
 
     }
 
-    function prepareShipment( $shipperAccount,$request, $pickUp, $shipTo, $parcels, $cash_on_delivery){
+    function prepareShipment($shipperAccount, $request, $pickUp, $shipTo, $parcels, $cash_on_delivery) {
         //
     }
 

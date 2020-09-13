@@ -19,8 +19,9 @@ use Illuminate\Support\Facades\Validator;
 /**
  * Class Postmen
  *
- * @property string                                                                                     $slug
- * @property \Illuminate\Database\Eloquent\HigherOrderBuilderProxy|\Illuminate\Support\MessageBag|mixed errors
+ * @property array $data
+ * @property string $slug
+ * @property mixed  errors
  *
  * @mixin \Illuminate\Database\Eloquent\Builder
  */
@@ -32,7 +33,8 @@ class Postmen extends Shipper_Provider {
     public function createShipperAccount(request $request) {
 
 
-        $url = env('POSTMEN_API_URL').'shipper-accounts';
+
+        $url = env('POSTMEN_API_URL', 'https://production-api.postmen.com/v3').'shipper-accounts';
 
 
         $credentials_rules     = $this->get_credentials_validation($request->get('shipper'));
@@ -40,7 +42,8 @@ class Postmen extends Shipper_Provider {
         if ($credentials_validator->fails()) {
 
 
-            $this->errors=$credentials_validator->errors();
+            $this->errors = $credentials_validator->errors();
+
             return false;
         }
 
@@ -53,26 +56,25 @@ class Postmen extends Shipper_Provider {
         $tenant = (new tenant)->where('slug', $request->get('tenant'))->first();
 
         $tenant_address = $tenant->data['address'];
-        $country = (new Country)->where('code',$tenant_address['country_code'])->first();
+        $country        = (new Country)->where('code', $tenant_address['country_code'])->first();
 
 
-        $address=[
-            'country'=>$country->code_iso3,
-            'street1'=>Arr::get($tenant_address,'address_line_1'),
-            'street2'=>Arr::get($tenant_address,'address_line_2'),
-            'city'=>Arr::get($tenant_address,'locality'),
-            'postal_code'=>Arr::get($tenant_address,'postal_code'),
-            'email'=>Arr::get($tenant->data,'email'),
-            'phone'=>Arr::get($tenant->data,'phone'),
-            'contact_name'=>Arr::get($tenant->data,'contact'),
-            'company_name'=>Arr::get($tenant->data,'organization'),
+        $address = [
+            'country'      => $country->code_iso3,
+            'street1'      => Arr::get($tenant_address, 'address_line_1'),
+            'street2'      => Arr::get($tenant_address, 'address_line_2'),
+            'city'         => Arr::get($tenant_address, 'locality'),
+            'postal_code'  => Arr::get($tenant_address, 'postal_code'),
+            'email'        => Arr::get($tenant->data, 'email'),
+            'phone'        => Arr::get($tenant->data, 'phone'),
+            'contact_name' => Arr::get($tenant->data, 'contact'),
+            'company_name' => Arr::get($tenant->data, 'organization'),
 
         ];
         $address = array_filter($address);
 
 
-
-        $data = [
+        $params = [
             'slug'        => $request->get('shipper'),
             'description' => $request->get('label'),
             'address'     => $address,
@@ -81,52 +83,39 @@ class Postmen extends Shipper_Provider {
         ];
 
 
-
         $headers = array(
             "content-type: application/json",
-            "postmen-api-key: "."215365e0-a689-4190-8fca-04dd55234466"
+            "postmen-api-key: ".$this->data['api_key']
         );
 
 
-        $curl = curl_init();
-        curl_setopt_array(
-            $curl, array(
-                     CURLOPT_RETURNTRANSFER => true,
-                     CURLOPT_URL            => $url,
-                     CURLOPT_CUSTOMREQUEST  => 'POST',
-                     CURLOPT_HTTPHEADER     => $headers,
-                     CURLOPT_POSTFIELDS     => json_encode($data)
-                 )
-        );
 
-        $response = json_decode(curl_exec($curl),true);
-        $err      = curl_error($curl);
+        $response = $this->call_api($url, $headers, $params);
 
+        if ($response['status'] != 200) {
+            $this->errors = [Arr::get($response, 'errors')];
 
-
-        curl_close($curl);
-
-        if ($err or !$response) {
-            $this->errors=[$err];
-            return false;
-        } elseif( $response['meta']['code']!=200 ) {
-            $this->errors=[$response];
             return false;
         }
 
-        $shipperAccount              = new ShipperAccount;
-        $shipperAccount->slug        = $request->get('shipper');
-        $shipperAccount->label       = $request->get('label');
-        $shipperAccount->shipper_id  = $this->shipper->id;
-        $shipperAccount->tenant_id   = $tenant->id;
-        $shipperAccount->data = $response['data'];
+        if ($response['data']['meta']['code'] != 200) {
+            $this->errors = [$response['data']];
+
+            return false;
+        }
+
+        $shipperAccount             = new ShipperAccount;
+        $shipperAccount->slug       = $request->get('shipper');
+        $shipperAccount->label      = $request->get('label');
+        $shipperAccount->shipper_id = $this->shipper->id;
+        $shipperAccount->tenant_id  = $tenant->id;
+        $shipperAccount->data       = $response['data']['data'];
         $shipperAccount->save();
 
         return $shipperAccount;
 
 
     }
-
 
     public function get_credentials_validation($slug) {
         switch ($slug) {
@@ -135,7 +124,7 @@ class Postmen extends Shipper_Provider {
 
             case 'apc-overnight':
                 return [
-                    'password' => ['required'],
+                    'password'   => ['required'],
                     'user_email' => ['required'],
 
                 ];
@@ -143,5 +132,6 @@ class Postmen extends Shipper_Provider {
                 return [];
         }
     }
+
 
 }

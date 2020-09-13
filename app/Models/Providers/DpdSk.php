@@ -29,7 +29,7 @@ class DpdSk extends Shipper_Provider {
 
     protected $table = 'dpd_sk_shipper_providers';
 
-    protected $api_url ="https://api.dpdportal.sk/shipment";
+    protected $api_url = "https://api.dpdportal.sk/shipment";
 
     protected $credentials_rules = [
         'apiKey'   => ['required'],
@@ -44,7 +44,6 @@ class DpdSk extends Shipper_Provider {
     ];
 
 
-
     public function createLabel(Request $request, ShipperAccount $shipperAccount) {
 
         $params = array(
@@ -57,19 +56,18 @@ class DpdSk extends Shipper_Provider {
                         'Email'     => $shipperAccount->credentials['username'],
                     ),
                 ),
-                'shipment'    => [$this->get_shipment_parameters($request,$shipperAccount)],
+                'shipment'    => [$this->get_shipment_parameters($request, $shipperAccount)],
             ),
             'id'      => 'null',
         );
 
 
+        $apiResponse = $this->call_api(
+            $this->api_url, ["Content-Type: application/json"], $params
+        );
 
 
-        $apiResponse = $this->call_api($this->api_url, $params);
-
-
-
-        $result=[];
+        $result = [];
         if (!empty($apiResponse['data']['error'])) {
 
             if ($apiResponse['data']['error']['code'] == 103) {
@@ -111,7 +109,7 @@ class DpdSk extends Shipper_Provider {
 
     }
 
-     function prepareShipment( $shipperAccount,$request, $pickUp, $shipTo, $parcelsData, $cash_on_delivery) {
+    function prepareShipment($shipperAccount, $request, $pickUp, $shipTo, $parcelsData, $cash_on_delivery) {
 
         try {
             $pickup_date = new Carbon(Arr::get($pickUp, 'date'));
