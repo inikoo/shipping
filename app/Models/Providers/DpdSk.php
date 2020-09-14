@@ -170,6 +170,7 @@ class DpdSk extends Shipper_Provider {
             ];
         }
 
+        $postcode=preg_replace('/-/','',trim(Arr::get($shipTo, 'sorting_code').' '.Arr::get($shipTo, 'postal_code')));
 
         return array(
             'reference'        => $request->get('reference'),
@@ -189,7 +190,7 @@ class DpdSk extends Shipper_Provider {
                 'nameDetail'   => $nameDetail,
                 'street'       => Arr::get($shipTo, 'address_line_1'),
                 'streetDetail' => Arr::get($shipTo, 'address_line_2'),
-                'zip'          => trim(Arr::get($shipTo, 'sorting_code').' '.Arr::get($shipTo, 'postal_code')),
+                'zip'          => $postcode,
                 'country'      => $country->code_iso_numeric,
                 'city'         => Arr::get($shipTo, 'locality'),
                 'phone'        => Arr::get($shipTo, 'phone'),

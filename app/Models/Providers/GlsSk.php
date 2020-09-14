@@ -62,6 +62,8 @@ class GlsSk extends Shipper_Provider {
 
         try {
 
+            //dd($request);
+
             $client = new SoapClient($this->api_url, $soapOptions);
 
             $apiResponse = $client->PrintLabels($request)->PrintLabelsResult;

@@ -62,6 +62,7 @@ class LabelController extends Controller {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+
         $parcels = json_decode($request->get('parcels'), true);
         $shipTo  = json_decode($request->get('ship_to'), true);
         $pick_up = json_decode($request->get('pick_up'), true);
