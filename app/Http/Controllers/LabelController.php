@@ -133,6 +133,7 @@ class LabelController extends Controller {
 
         $response = $shipper_account->createLabel($request);
 
+
         $status = Arr::get($response, 'status', 200);
         $errors = Arr::get($response, 'errors', []);
 

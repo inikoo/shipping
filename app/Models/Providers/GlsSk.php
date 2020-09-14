@@ -28,7 +28,7 @@ class GlsSk extends Shipper_Provider {
 
     protected $table = 'gls_sk_shipper_providers';
 
-    protected $api_url = "https://api.mygls.sk/ParcelService.svc?singleWsdl";
+    protected string $api_url = "https://api.mygls.sk/ParcelService.svc?singleWsdl";
 
     protected $credentials_rules = [
         'username'      => [

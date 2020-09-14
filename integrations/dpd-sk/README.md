@@ -12,5 +12,6 @@
 - https://capi.dpdportal.sk/apix/shipment/json  API url
 
 ##### Production
+-  https://www.dpdportal.sk  web portal
 -  https://api.dpdportal.sk/shipment/json API url
 

@@ -27,8 +27,6 @@ use Illuminate\Database\Eloquent\Model;
  */
 class ShipperAccount extends Model {
 
-
-
     protected $casts = [
         'data' => 'array',
         'credentials' => 'array',
@@ -45,7 +43,6 @@ class ShipperAccount extends Model {
         'name'
     ];
 
-
     public function shipper()
     {
         return $this->belongsTo('App\Models\Shipper');
@@ -56,11 +53,9 @@ class ShipperAccount extends Model {
         return $this->belongsTo('App\Models\Tenant');
     }
 
-
     public function createLabel($request){
 
         return $this->shipper->provider->createLabel($request,$this);
-
     }
 
     public function pdf_labels() {

@@ -26,6 +26,9 @@ use Illuminate\Support\Facades\Validator;
 class Shipper_Provider extends Model {
 
 
+    protected string $api_url = '';
+
+
     protected $casts = [
         'data' => 'array'
     ];
@@ -38,6 +41,11 @@ class Shipper_Provider extends Model {
     protected $fillable = [
         'slug',
     ];
+
+
+    function __construct(array $attributes = []) {
+        parent::__construct($attributes);
+    }
 
     public function shipper() {
         return $this->morphOne('App\Models\Shipper', 'provider');
@@ -99,6 +107,7 @@ class Shipper_Provider extends Model {
                      CURLOPT_HTTPHEADER     => $headers,
                  )
         );
+
 
         $raw_response = curl_exec($curl);
 

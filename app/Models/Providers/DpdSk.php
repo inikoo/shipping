@@ -29,7 +29,7 @@ class DpdSk extends Shipper_Provider {
 
     protected $table = 'dpd_sk_shipper_providers';
 
-    protected $api_url = "https://api.dpdportal.sk/shipment";
+    protected string $api_url = "https://api.dpdportal.sk/shipment";
 
     protected $credentials_rules = [
         'apiKey'   => ['required'],

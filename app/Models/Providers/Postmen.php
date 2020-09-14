@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Validator;
 /**
  * Class Postmen
  *
- * @property array $data
+ * @property array  $data
  * @property string $slug
  * @property mixed  errors
  *
@@ -28,22 +28,27 @@ use Illuminate\Support\Facades\Validator;
 class Postmen extends Shipper_Provider {
 
     protected $table = 'postmen_shipper_providers';
+    protected array $headers = [];
 
+    function __construct(array $attributes = []) {
+        parent::__construct($attributes);
+
+        $this->api_url = env('POSTMEN_API_URL', 'https://production-api.postmen.com/v3/');
+
+    }
 
     public function createShipperAccount(request $request) {
 
 
-
-        $url = env('POSTMEN_API_URL', 'https://production-api.postmen.com/v3').'shipper-accounts';
-
+        $this->headers = array(
+            "content-type: application/json",
+            "postmen-api-key: ".$this->data['api_key']
+        );
 
         $credentials_rules     = $this->get_credentials_validation($request->get('shipper'));
         $credentials_validator = validator::make($request->all(), $credentials_rules);
         if ($credentials_validator->fails()) {
-
-
             $this->errors = $credentials_validator->errors();
-
             return false;
         }
 
@@ -55,42 +60,15 @@ class Postmen extends Shipper_Provider {
 
         $tenant = (new tenant)->where('slug', $request->get('tenant'))->first();
 
-        $tenant_address = $tenant->data['address'];
-        $country        = (new Country)->where('code', $tenant_address['country_code'])->first();
-
-
-        $address = [
-            'country'      => $country->code_iso3,
-            'street1'      => Arr::get($tenant_address, 'address_line_1'),
-            'street2'      => Arr::get($tenant_address, 'address_line_2'),
-            'city'         => Arr::get($tenant_address, 'locality'),
-            'postal_code'  => Arr::get($tenant_address, 'postal_code'),
-            'email'        => Arr::get($tenant->data, 'email'),
-            'phone'        => Arr::get($tenant->data, 'phone'),
-            'contact_name' => Arr::get($tenant->data, 'contact'),
-            'company_name' => Arr::get($tenant->data, 'organization'),
-
-        ];
-        $address = array_filter($address);
-
-
         $params = [
             'slug'        => $request->get('shipper'),
             'description' => $request->get('label'),
-            'address'     => $address,
+            'address'     => $this->get_tenant_address($tenant),
             'timezone'    => 'UTC',
             'credentials' => $credentials
         ];
 
-
-        $headers = array(
-            "content-type: application/json",
-            "postmen-api-key: ".$this->data['api_key']
-        );
-
-
-
-        $response = $this->call_api($url, $headers, $params);
+        $response = $this->call_api($this->api_url.'shipper-accounts', $this->headers, $params);
 
         if ($response['status'] != 200) {
             $this->errors = [Arr::get($response, 'errors')];
@@ -100,7 +78,6 @@ class Postmen extends Shipper_Provider {
 
         if ($response['data']['meta']['code'] != 200) {
             $this->errors = [$response['data']];
-
             return false;
         }
 
@@ -131,6 +108,133 @@ class Postmen extends Shipper_Provider {
             default:
                 return [];
         }
+    }
+
+    public function createLabel(Request $request, ShipperAccount $shipperAccount) {
+
+
+        $this->headers = array(
+            "content-type: application/json",
+            "postmen-api-key: ".$this->data['api_key']
+        );
+
+        $apiResponse = $this->call_api(
+            $this->api_url.'labels', $this->headers, $this->get_shipment_parameters($request, $shipperAccount)
+        );
+
+        $result = [];
+        if ($apiResponse['data']['meta']['code'] != 200) {
+            $this->errors       = [$apiResponse['data']['meta']];
+            $result['errors'][] = [$apiResponse['data']['meta']['code'] => trim($apiResponse['data']['meta']['message'].' '.json_encode($apiResponse['data']['meta']['details']))];
+        } else {
+
+            $result['tracking_number'] = join($apiResponse['data']['data']['tracking_numbers']);
+            $result['label_link']  = $apiResponse['data']['data']['files']['label']['url'];
+            $result['shipment_id'] = $apiResponse['data']['data']['id'];
+
+
+        }
+
+        return $result;
+
+    }
+
+    function get_tenant_address($tenant) {
+
+        $tenant_address = $tenant->data['address'];
+        $tenant_country = (new Country)->where('code', $tenant_address['country_code'])->first();
+
+
+        $tenant_address = [
+            'country'      => $tenant_country->code_iso3,
+            'street1'      => Arr::get($tenant_address, 'address_line_1'),
+            'street2'      => Arr::get($tenant_address, 'address_line_2'),
+            'city'         => Arr::get($tenant_address, 'locality'),
+            'postal_code'  => Arr::get($tenant_address, 'postal_code'),
+            'email'        => Arr::get($tenant->data, 'email'),
+            'phone'        => Arr::get($tenant->data, 'phone'),
+            'contact_name' => Arr::get($tenant->data, 'contact'),
+            'company_name' => Arr::get($tenant->data, 'organization'),
+
+        ];
+
+        return array_filter($tenant_address);
+    }
+
+
+    function prepareShipment($shipperAccount, $request, $pickUp, $shipTo, $parcelsData, $cash_on_delivery) {
+
+
+        $shipToCountry = (new Country)->where('code', Arr::get($shipTo, 'country_code'))->first();
+
+
+        $shipTo = [
+            'country'      => $shipToCountry->code_iso3,
+            'street1'      => Arr::get($shipTo, 'address_line_1'),
+            'street2'      => Arr::get($shipTo, 'address_line_2'),
+            'city'         => Arr::get($shipTo, 'locality'),
+            'postal_code'  => Arr::get($shipTo, 'postal_code'),
+            'email'        => Arr::get($shipTo, 'email'),
+            'phone'        => Arr::get($shipTo, 'phone'),
+            'contact_name' => Arr::get($shipTo, 'contact'),
+            'company_name' => Arr::get($shipTo, 'organization'),
+
+        ];
+
+        $shipTo = array_filter($shipTo);
+
+
+        $parcels    = [];
+        $references = [];
+        foreach ($parcelsData as $parcelData) {
+            $references[] = $request->get('reference');
+            $parcels[]    = [
+                'box_type'  => 'custom',
+                'dimension' => [
+                    'width'  => $parcelData['width'],
+                    'height' => $parcelData['height'],
+                    'depth'  => $parcelData['depth'],
+                    'unit'   => 'cm'
+
+                ],
+                'weight'    => [
+                    'value' => $parcelData['weight'],
+                    'unit'  => 'kg'
+
+                ],
+                'items'     => [
+                    [
+                        'description' => $request->get('reference').' items',
+                        'quantity'    => 1,
+                        'price'       => [
+                            'amount'   => 0,
+                            'currency' => 'GBP'
+                        ],
+                        'weight'      => [
+                            'value' => $parcelData['weight'],
+                            'unit'  => 'kg'
+
+                        ],
+                    ]
+                ]
+            ];
+        }
+
+        return array(
+            'service_type'          => $request->get('service_type'),
+            'shipper_account'       => ['id' => $shipperAccount->data['id']],
+            'shipment'              => [
+                'ship_from' => $this->get_tenant_address($shipperAccount->tenant),
+                'ship_to'   => $shipTo,
+                'parcels'   => $parcels
+            ],
+            'delivery_instructions' => $request->get('note'),
+
+            'references'   => $references,
+            'order_number' => $request->get('reference'),
+
+        );
+
     }
 
 
