@@ -14,27 +14,27 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * Class ShipperAccount
  *
- * @property string $slug
- * @property string $label
+ * @property integer $id
+ * @property string  $slug
+ * @property string  $label
  * @property integer $shipper_id
  * @property integer $tenant_id
- * @property array $credentials
- * @property array $data
- * @property object $shipper
-
+ * @property array   $credentials
+ * @property array   $data
+ * @property object  $shipper
  *
  * @mixin \Illuminate\Database\Eloquent\Builder
  */
 class ShipperAccount extends Model {
 
     protected $casts = [
-        'data' => 'array',
+        'data'        => 'array',
         'credentials' => 'array',
     ];
 
     protected $attributes = [
-        'data' => '{}',
-        'credentials'=> '{}'
+        'data'        => '{}',
+        'credentials' => '{}'
     ];
 
 
@@ -43,25 +43,25 @@ class ShipperAccount extends Model {
         'name'
     ];
 
-    public function shipper()
-    {
+    public function shipper() {
         return $this->belongsTo('App\Models\Shipper');
     }
 
-    public function tenant()
-    {
+    public function tenant() {
         return $this->belongsTo('App\Models\Tenant');
     }
 
-    public function createLabel($request){
+    public function createLabel($request) {
+        return $this->shipper->provider->createLabel($request, $this);
+    }
 
-        return $this->shipper->provider->createLabel($request,$this);
+    public function get_label($labelID) {
+        return $this->shipper->provider->get_label($labelID, $this);
     }
 
     public function pdf_labels() {
         return $this->hasMany('App\Models\PdfLabel');
     }
-
 
 
 }

@@ -162,11 +162,19 @@ class LabelController extends Controller {
 
 
     public function display($checksum) {
-
         $pdfLabel = (new PdfLabel())->where('checksum', $checksum)->first();
-
-
         return response(base64_decode($pdfLabel->data), 200)->header('Content-Type', 'application/pdf');
+
+    }
+
+    public function async_display($shipperAccountID , $labelId) {
+
+        /**
+         * @var $shipper_account \App\Models\ShipperAccount
+         */
+        $shipper_account = (new ShipperAccount)->find($shipperAccountID);
+        return response($shipper_account->get_label($labelId), 200)->header('Content-Type', 'application/pdf');
+
 
     }
 

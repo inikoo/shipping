@@ -89,7 +89,7 @@ class Shipper_Provider extends Model {
 
     }
 
-    public function call_api($url, $headers, $params) {
+    public function call_api($url, $headers, $params, $method = 'POST') {
 
         $curl = curl_init();
 
@@ -102,7 +102,7 @@ class Shipper_Provider extends Model {
                      CURLOPT_TIMEOUT        => 0,
                      CURLOPT_FOLLOWLOCATION => true,
                      CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
-                     CURLOPT_CUSTOMREQUEST  => "POST",
+                     CURLOPT_CUSTOMREQUEST  => $method,
                      CURLOPT_POSTFIELDS     => json_encode($params),
                      CURLOPT_HTTPHEADER     => $headers,
                  )
@@ -154,6 +154,10 @@ class Shipper_Provider extends Model {
     }
 
     function prepareShipment($shipperAccount, $request, $pickUp, $shipTo, $parcels, $cash_on_delivery) {
+        //
+    }
+
+    function get_label($labelID, $shipperAccount) {
         //
     }
 

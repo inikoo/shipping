@@ -65,23 +65,25 @@ class ApcGb extends Shipper_Provider {
         );
 
 
-
         $result = [];
-        if($apiResponse['status']==200){
-            $data=array_pop($apiResponse['data']['Orders']);
-
-            if($data['Messages']['Code']=='SUCCESS'  ){
 
 
+        if ($apiResponse['status'] == 200) {
+            if ($apiResponse['data']['Orders']['Messages']['Code'] == 'SUCCESS') {
+                $data = $apiResponse['data']['Orders']['Order'];
 
                 $result['tracking_number'] = $data['WayBill'];
-                $result['label_link']      = env('APP_URL').'/labels/apc/'.$data['WayBill'];
-                $result['shipment_id']     =$data['OrderNumber'];
+                $result['label_link']      = env('APP_URL').'/async_labels/'.$shipperAccount->id.'/'.$data['OrderNumber'];
+                $result['shipment_id']     = $data['OrderNumber'];
+
                 return $result;
             }
 
+
         }
-        $result['errors'] = [json_encode($apiResponse)];
+        $result['errors'] = [json_encode($apiResponse['data'])];
+
+
         return $result;
 
 
@@ -109,11 +111,11 @@ class ApcGb extends Shipper_Provider {
 
         if (in_array(
             $country->code, [
-            'GB',
-            'IM',
-            'JE',
-            'GG'
-        ]
+                              'GB',
+                              'IM',
+                              'JE',
+                              'GG'
+                          ]
         )) {
             $postalCode = Arr::get($shipTo, 'postal_code');
         } else {
@@ -124,15 +126,16 @@ class ApcGb extends Shipper_Provider {
 
         $items = [];
         foreach ($parcelsData as $parcelData) {
-            $items[] = [
-                'Item' => [
-                    'Type'   => 'ALL',
-                    'Weight' => $parcelData['weight'],
-                    'Length' => $parcelData['depth'],
-                    'Width'  => $parcelData['width'],
-                    'Height' => $parcelData['height']
-                ]
-            ];
+            array_push(
+                $items, [
+                          'Type'   => 'ALL',
+                          'Weight' => $parcelData['weight'],
+                          'Length' => $parcelData['depth'],
+                          'Width'  => $parcelData['width'],
+                          'Height' => $parcelData['height']
+                      ]
+            );
+
         }
 
 
@@ -140,7 +143,7 @@ class ApcGb extends Shipper_Provider {
             'CollectionDate'  => $pickup_date->format('d/m/Y'),
             'ReadyAt'         => Arr::get($pickUp, 'ready', '16:30'),
             'ClosedAt'        => Arr::get($pickUp, 'end', '17:00'),
-           // 'ProductCode'     => $request->get('service_type', 'ND16'),
+            // 'ProductCode'     => $request->get('service_type', 'ND16'),
             'Reference'       => $request->get('reference'),
             'Delivery'        => [
                 'CompanyName'  => $name,
@@ -160,9 +163,25 @@ class ApcGb extends Shipper_Provider {
             ],
             'ShipmentDetails' => [
                 'NumberOfPieces' => count($parcelsData),
-                'Items'          => $items
+                'Items'          => ['Item' => $items]
             ]
         ];
+
+    }
+
+    function get_label($labelID, $shipperAccount) {
+
+        $headers = [
+            "remote-user: Basic ".base64_encode($shipperAccount->credentials['email'].':'.$shipperAccount->credentials['password']),
+            "Content-Type: application/json"
+        ];
+
+        $apiResponse = $this->call_api(
+            $this->api_url.'Orders/'.$labelID.'.json', $headers, [], 'GET'
+        );
+
+        return base64_decode($apiResponse['data']['Orders']['Order']['Label']['Content']);
+
 
     }
 
