@@ -8,6 +8,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Country;
+use App\Models\Providers\ApcGb;
 use App\Models\Providers\DpdSk;
 use App\Models\Providers\GlsSk;
 use App\Models\Providers\Postmen;
@@ -69,6 +70,9 @@ class CreateShipper extends Command {
                 break;
             case 'gls-sk':
                 $shipper_provider = (new GlsSk)->where('slug', 'MyGLS-v1')->first();
+                break;
+            case 'apc-gb':
+                $shipper_provider = (new ApcGb)->where('slug', 'v3')->first();
                 break;
             case 'postmen-devel':
                 $shipper_provider = (new Postmen)->where('slug', 'v3-devel')->first();

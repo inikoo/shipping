@@ -5,6 +5,7 @@
  * Copyright (c) 2020. Aiku.io
  */
 
+use App\Models\Providers\ApcGb;
 use App\Models\Providers\DpdSk;
 use App\Models\Providers\GlsSk;
 use App\Models\Providers\Postmen;
@@ -19,27 +20,35 @@ class ShipperProvidersSeeder extends Seeder {
     public function run() {
 
         try{
-            $postmen_shipper_provider       = new Postmen;
-            $postmen_shipper_provider->slug = 'v3';
-            $postmen_shipper_provider->save();
+            $shipper_provider       = new Postmen;
+            $shipper_provider->slug = 'v3';
+            $shipper_provider->save();
         }catch (Exception $e){
             print "Postmen Model v1 already in the database\n";
         }
 
         try{
-            $postmen_shipper_provider       = new DpdSk;
-            $postmen_shipper_provider->slug = 'v2-json';
-            $postmen_shipper_provider->save();
+            $shipper_provider       = new DpdSk;
+            $shipper_provider->slug = 'v2-json';
+            $shipper_provider->save();
         }catch (Exception $e){
             print "DPD SK Model v2-json already in the database\n";
         }
 
         try{
-            $postmen_shipper_provider       = new GlsSk;
-            $postmen_shipper_provider->slug = 'MyGLS-v1';
-            $postmen_shipper_provider->save();
+            $shipper_provider       = new GlsSk;
+            $shipper_provider->slug = 'MyGLS-v1';
+            $shipper_provider->save();
         }catch (Exception $e){
             print "GLS SK Model MyGLS-v1 already in the database\n";
+        }
+
+        try{
+            $shipper_provider       = new ApcGb;
+            $shipper_provider->slug = 'v3';
+            $shipper_provider->save();
+        }catch (Exception $e){
+            print "APC GB already in the database\n";
         }
 
 
