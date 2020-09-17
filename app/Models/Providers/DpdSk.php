@@ -170,10 +170,12 @@ class DpdSk extends Shipper_Provider {
             ];
         }
 
-        $postcode=preg_replace('/-/','',trim(Arr::get($shipTo, 'sorting_code').' '.Arr::get($shipTo, 'postal_code')));
+
+        $postcode=preg_replace("/[^0-9]/", '',trim(Arr::get($shipTo, 'sorting_code').' '.Arr::get($shipTo, 'postal_code')));
+        $reference=preg_replace("/[^A-Za-z0-9]/", '', $request->get('reference'));
 
         return array(
-            'reference'        => $request->get('reference'),
+            'reference'        => $reference,
             'delisId'          => $shipperAccount->credentials['delisId'],
             'note'             => $request->get('note'),
             'product'          => $request->get('shipping_product', 1),
