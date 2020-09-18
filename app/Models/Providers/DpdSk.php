@@ -183,10 +183,9 @@ class DpdSk extends Shipper_Provider {
 
 
         $phone = trim(Arr::get($shipTo, 'phone'));
-        if(!preg_match('/^\+/',$phone)){
+        if(!preg_match('/^\+/',$phone) and $phone!=''){
             $phone='+'.$phone;
         }
-
 
 
 
