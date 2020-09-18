@@ -171,8 +171,24 @@ class DpdSk extends Shipper_Provider {
         }
 
 
-        $postcode=preg_replace("/[^0-9]/", '',trim(Arr::get($shipTo, 'sorting_code').' '.Arr::get($shipTo, 'postal_code')));
-        $reference=preg_replace("/[^A-Za-z0-9]/", '', $request->get('reference'));
+        $postcode  = preg_replace("/[^0-9]/", '', trim(Arr::get($shipTo, 'sorting_code').' '.Arr::get($shipTo, 'postal_code')));
+        $reference = preg_replace("/[^A-Za-z0-9]/", '', $request->get('reference'));
+
+
+        $street       = preg_replace("/&/", ' ', Arr::get($shipTo, 'address_line_1'));
+        $streetDetail = preg_replace("/&/", '', Arr::get($shipTo, 'address_line_2'));
+
+        $street       = preg_replace("/²/", '2', $street);
+        $streetDetail = preg_replace("/²/", '2', $streetDetail);
+
+
+        $phone = trim(Arr::get($shipTo, 'phone'));
+        if(!preg_match('/^\+/',$phone)){
+            $phone='+'.$phone;
+        }
+
+
+
 
         return array(
             'reference'        => $reference,
@@ -190,12 +206,12 @@ class DpdSk extends Shipper_Provider {
                 'type'         => $type,
                 'name'         => $name,
                 'nameDetail'   => $nameDetail,
-                'street'       => Arr::get($shipTo, 'address_line_1'),
-                'streetDetail' => Arr::get($shipTo, 'address_line_2'),
+                'street'       => $street,
+                'streetDetail' => $streetDetail,
                 'zip'          => $postcode,
                 'country'      => $country->code_iso_numeric,
                 'city'         => Arr::get($shipTo, 'locality'),
-                'phone'        => Arr::get($shipTo, 'phone'),
+                'phone'        => $phone,
                 'email'        => Arr::get($shipTo, 'email'),
                 'note'         => '',
             ),
