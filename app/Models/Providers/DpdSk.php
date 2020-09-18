@@ -14,6 +14,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Carbon\Carbon;
+use ReflectionException;
 use Yasumi\Yasumi;
 
 
@@ -193,17 +194,7 @@ class DpdSk extends Shipper_Provider {
             $phone = '+'.$phone;
         }
 
-        if ($pickup_date->isWeekend()) {
-            $pickup_date = Carbon::parse('next monday');
-        }
-
-       // $holidays = Yasumi::create('Slovakia', date('Y'));
-
-       // print_r($holidays);
-
-
-        //print $pickup_date->format('Ymd');
-        //exit;
+        $pickup_date=$this->get_pick_up_date($pickup_date);
 
         return array(
             'reference'        => $reference,
@@ -233,6 +224,36 @@ class DpdSk extends Shipper_Provider {
             'parcels'          => ['parcel' => $parcelsData],
             'services'         => $services
         );
+
+
+    }
+
+    private function get_pick_up_date($pickup_date){
+        if ($pickup_date->isWeekend() or $this->is_bank_holiday($pickup_date)) {
+            return $this->get_pick_up_date($pickup_date->addDay());
+        }
+        return $pickup_date;
+
+    }
+
+
+    private function is_bank_holiday($date){
+
+        $formatted_date=$date->format('Y-m-d');
+
+        try {
+            $holidays = Yasumi::create('Slovakia', $date->format('Y'));
+            foreach ($holidays as $day) {
+                if($day==$formatted_date and in_array($day->getType(),['bank','official']) ){
+                    return true;
+                }
+            }
+            return false;
+
+        } catch (ReflectionException $e) {
+            return false;
+        }
+
 
 
     }
