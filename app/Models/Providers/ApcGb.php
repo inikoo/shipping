@@ -139,7 +139,7 @@ class ApcGb extends Shipper_Provider {
         }
 
 
-        return [
+        $params = [
             'CollectionDate'  => $pickup_date->format('d/m/Y'),
             'ReadyAt'         => Arr::get($pickUp, 'ready', '16:30'),
             'ClosedAt'        => Arr::get($pickUp, 'end', '17:00'),
@@ -166,6 +166,52 @@ class ApcGb extends Shipper_Provider {
                 'Items'          => ['Item' => $items]
             ]
         ];
+
+
+        if ($request->get('service_type') != '') {
+            if ($request->get('service_type') != 'Auto') {
+                $params['ProductCode'] = $request->get('service_type');
+            }
+        } else {
+
+            $productCode = '';
+
+            if (count($parcelsData) == 1) {
+
+                $dimensions = [
+                    $parcelsData[0]['height'],
+                    $parcelsData[0]['width'],
+                    $parcelsData[0]['depth']
+                ];
+                rsort($dimensions);
+
+
+                if ($parcelsData[0]['weight'] <= 5 and $dimensions[0] <= 45 and $dimensions[1] <= 35 and $dimensions[2] <= 20) {
+                    $productCode = 'LW16';
+                }
+
+
+
+                if ($parcelsData[0]['weight'] <= 5 and $dimensions[0] <= 45 and $dimensions[1] <= 35 and $dimensions[2] <= 20) {
+                    $productCode = 'LW16';
+                }
+
+
+            }
+
+            if (preg_match('/^BT/', $postalCode)) {
+                $productCode = 'ROAD';
+            }
+
+            if($productCode!=''){
+                $params['ProductCode'] = $productCode;
+
+            }
+
+        }
+
+
+        return $params;
 
     }
 
