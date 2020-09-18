@@ -14,6 +14,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Carbon\Carbon;
+use Yasumi\Yasumi;
 
 
 /**
@@ -170,8 +171,11 @@ class DpdSk extends Shipper_Provider {
             ];
         }
 
+        $postcode=trim(Arr::get($shipTo, 'sorting_code').' '.Arr::get($shipTo, 'postal_code'));
+        if(!in_array($country->code,['GB','NL'])){
+            $postcode  = preg_replace("/[^0-9]/", '', $postcode);
+        }
 
-        $postcode  = preg_replace("/[^0-9]/", '', trim(Arr::get($shipTo, 'sorting_code').' '.Arr::get($shipTo, 'postal_code')));
         $reference = preg_replace("/[^A-Za-z0-9]/", '', $request->get('reference'));
 
 
@@ -193,6 +197,13 @@ class DpdSk extends Shipper_Provider {
             $pickup_date = Carbon::parse('next monday');
         }
 
+       // $holidays = Yasumi::create('Slovakia', date('Y'));
+
+       // print_r($holidays);
+
+
+        //print $pickup_date->format('Ymd');
+        //exit;
 
         return array(
             'reference'        => $reference,
