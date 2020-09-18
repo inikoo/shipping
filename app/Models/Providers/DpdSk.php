@@ -181,12 +181,17 @@ class DpdSk extends Shipper_Provider {
         $street       = preg_replace("/²/", '2', $street);
         $streetDetail = preg_replace("/²/", '2', $streetDetail);
 
+        $street = preg_replace("/Ø/", 'ø', $street);
+        $streetDetail = preg_replace("/Ø/", 'ø', $streetDetail);
 
         $phone = trim(Arr::get($shipTo, 'phone'));
-        if(!preg_match('/^\+/',$phone) and $phone!=''){
-            $phone='+'.$phone;
+        if (!preg_match('/^\+/', $phone) and $phone != '') {
+            $phone = '+'.$phone;
         }
 
+        if ($pickup_date->isWeekend()) {
+            $pickup_date = Carbon::parse('next monday');
+        }
 
 
         return array(
