@@ -6,7 +6,9 @@
  */
 
 use App\Models\Providers\ApcGb;
+use App\Models\Providers\DpdGb;
 use App\Models\Providers\DpdSk;
+use App\Models\Providers\GlsEs;
 use App\Models\Providers\GlsSk;
 use App\Models\Providers\Postmen;
 use Illuminate\Database\Seeder;
@@ -49,6 +51,22 @@ class ShipperProvidersSeeder extends Seeder {
             $shipper_provider->save();
         }catch (Exception $e){
             print "APC GB already in the database\n";
+        }
+
+        try{
+            $shipper_provider       = new DpdGb;
+            $shipper_provider->slug = 'v3';
+            $shipper_provider->save();
+        }catch (Exception $e){
+            print "DPD GB already in the database\n";
+        }
+
+        try{
+            $shipper_provider       = new GlsEs;
+            $shipper_provider->slug = 'v3';
+            $shipper_provider->save();
+        }catch (Exception $e){
+            print "GLS ES already in the database\n";
         }
 
 

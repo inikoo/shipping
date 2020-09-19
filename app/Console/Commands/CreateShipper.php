@@ -9,7 +9,9 @@ namespace App\Console\Commands;
 
 use App\Models\Country;
 use App\Models\Providers\ApcGb;
+use App\Models\Providers\DpdGb;
 use App\Models\Providers\DpdSk;
+use App\Models\Providers\GlsEs;
 use App\Models\Providers\GlsSk;
 use App\Models\Providers\Postmen;
 use App\Models\Shipper;
@@ -49,10 +51,7 @@ class CreateShipper extends Command {
     public function handle() {
 
 
-        /**
-         * @var $shipper Shipper
-         */
-        $shipper = new Shipper(
+        $_shipper = new Shipper(
             [
                 'slug' => $this->argument('slug'),
                 'name' => $this->argument('name'),
@@ -61,15 +60,24 @@ class CreateShipper extends Command {
 
         $country = (new Country)->where('code', $this->argument('country_code'))->first();
 
-        $shipper = $country->shippers()->save($shipper);
+        /**
+         * @var $shipper Shipper
+         */
+        $shipper = $country->shippers()->save($_shipper);
 
 
         switch ($this->argument('provider')) {
             case 'dpd-sk':
                 $shipper_provider = (new DpdSk)->where('slug', 'v2-json')->first();
                 break;
+            case 'dpd-gb':
+                $shipper_provider = (new DpdGb)->where('slug', 'v3')->first();
+                break;
             case 'gls-sk':
                 $shipper_provider = (new GlsSk)->where('slug', 'MyGLS-v1')->first();
+                break;
+            case 'gls-es':
+                $shipper_provider = (new GlsEs)->where('slug', 'v3')->first();
                 break;
             case 'apc-gb':
                 $shipper_provider = (new ApcGb)->where('slug', 'v3')->first();

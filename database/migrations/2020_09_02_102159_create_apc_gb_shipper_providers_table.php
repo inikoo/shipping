@@ -20,7 +20,7 @@ class CreateApcGbShipperProvidersTable extends Migration
     {
         Schema::create('apc_gb_shipper_providers', function (Blueprint $table) {
             $table->id();
-            $table->string('slug');
+            $table->string('slug')->unique();
             $table->jsonb('data');
             $table->timestamps();
         });

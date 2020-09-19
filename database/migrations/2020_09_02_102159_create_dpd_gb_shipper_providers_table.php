@@ -1,7 +1,7 @@
 <?php
 /*
  * Author: Raul A Perusquía-Flores (raul@aiku.io)
- * Created: Wed, 02 Sep 2020 18:33:52 Malaysia Time, Kuala Lumpur, Malaysia
+ * Created: Sat, 19 Sep 2020 12:23:31 Malaysia Time, Kuala Lumpur, Malaysia
  * Copyright (c) 2020. Aiku.io
  */
 
@@ -9,7 +9,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateGlsSkShipperProvidersTable extends Migration
+class CreateDpdGbShipperProvidersTable extends Migration
 {
     /**
      * Run the migrations.
@@ -18,7 +18,7 @@ class CreateGlsSkShipperProvidersTable extends Migration
      */
     public function up()
     {
-        Schema::create('gls_sk_shipper_providers', function (Blueprint $table) {
+        Schema::create('dpd_gb_shipper_providers', function (Blueprint $table) {
             $table->id();
             $table->string('slug')->unique();
             $table->jsonb('data');
@@ -33,6 +33,6 @@ class CreateGlsSkShipperProvidersTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('gls_sk_shipper_providers');
+        Schema::dropIfExists('dpd_gb_shipper_providers');
     }
 }
