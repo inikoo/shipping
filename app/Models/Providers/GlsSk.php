@@ -13,7 +13,6 @@ use App\Models\ShipperAccount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use SoapClient;
-use SoapFault;
 use stdClass;
 
 /**
@@ -60,37 +59,45 @@ class GlsSk extends Shipper_Provider {
         );
 
 
-        try {
+       // try {
 
             $client = new SoapClient($this->api_url, $soapOptions);
 
-            $apiResponse = $client->PrintLabels($request)->PrintLabelsResult;
 
-            $result = [];
-            if (count((array)$apiResponse->PrintLabelsErrorList)) {
-                $result['errors'] = [$apiResponse->PrintLabelsErrorList];
-            } elseif ($apiResponse->Labels != "") {
-
-                $pdfData     = $apiResponse->Labels;
-                $pdfChecksum = md5($pdfData);
-                $pdfLabel    = new PdfLabel(
-                    [
-                        'checksum' => $pdfChecksum,
-                        'data'     => base64_encode($pdfData)
-                    ]
-                );
-                $shipperAccount->pdf_labels()->save($pdfLabel);
-
-                $result['tracking_number'] = $apiResponse->PrintLabelsInfoList->PrintLabelsInfo->ParcelNumber;
-                $result['shipment_id']     = $apiResponse->PrintLabelsInfoList->PrintLabelsInfo->ParcelId;
-                $result['label_link']      = env('APP_URL').'/labels/'.$pdfChecksum;
-
-            }
+        //} catch (SoapFault $e) {
+        //    $result['errors'] = ['Soap API connection error'];
+        //    return $result;
+       // }
 
 
-        } catch (SoapFault $e) {
-            $result['errors'] = ['Soap API connection error'];
+
+        //print_r($request);
+
+        $apiResponse = $client->PrintLabels($request)->PrintLabelsResult;
+
+
+
+        $result = [];
+        if (count((array)$apiResponse->PrintLabelsErrorList)) {
+            $result['errors'] = [$apiResponse->PrintLabelsErrorList];
+        } elseif ($apiResponse->Labels != "") {
+
+            $pdfData     = $apiResponse->Labels;
+            $pdfChecksum = md5($pdfData);
+            $pdfLabel    = new PdfLabel(
+                [
+                    'checksum' => $pdfChecksum,
+                    'data'     => base64_encode($pdfData)
+                ]
+            );
+            $shipperAccount->pdf_labels()->save($pdfLabel);
+
+            $result['tracking_number'] = $apiResponse->PrintLabelsInfoList->PrintLabelsInfo->ParcelNumber;
+            $result['shipment_id']     = $apiResponse->PrintLabelsInfoList->PrintLabelsInfo->ParcelId;
+            $result['label_link']      = env('APP_URL').'/labels/'.$pdfChecksum;
+
         }
+
 
         return $result;
 
@@ -148,7 +155,7 @@ class GlsSk extends Shipper_Provider {
         $pickupAddress->CountryIsoCode   = Arr::get($tenant->data['address'], 'country_code');
         $parcel->PickupAddress           = $pickupAddress;
         $parcel->PickupDate              = gmdate('Y-m-d');
-        $parcel->ServiceList = $services;
+        $parcel->ServiceList             = $services;
 
         $parcels[] = $parcel;
 

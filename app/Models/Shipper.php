@@ -50,6 +50,11 @@ class Shipper extends Model {
         return $this->morphTo(__FUNCTION__,'provider_type','provider_id');
     }
 
+    public function shipperAccounts()
+    {
+        return $this->hasMany('App\Models\ShipperAccount');
+    }
+
 
     protected static function booted() {
         static::created(

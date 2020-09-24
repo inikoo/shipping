@@ -1,29 +1,29 @@
 <?php
 /*
  * Author: Raul A Perusquía-Flores (raul@aiku.io)
- * Created: Tue, 01 Sep 2020 21:30:22 Malaysia Time, Kuala Lumpur, Malaysia
+ * Created: Thu, 24 Sep 2020 12:11:58 Malaysia Time, Kuala Lumpur, Malaysia
  * Copyright (c) 2020. Aiku.io
  */
 
 namespace App\Console\Commands;
 
-use App\Models\User;
+use App\Models\Providers\DpdGb;
 use Illuminate\Console\Command;
 
-class CreateUser extends Command {
+class PingDpdGb extends Command {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'add:user {username}';
+    protected $signature = 'ping:dpd_gb';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Create user';
+    protected $description = 'Refresh login session fro DPD GB shipping accounts';
 
     /**
      * Create a new command instance.
@@ -42,9 +42,10 @@ class CreateUser extends Command {
     public function handle() {
 
 
-        $user           = new User;
-        $user->username = $this->argument('username');
-        $user->save();
+        $provider= (new DpdGb)->where('slug', 'v3')->first();
+        foreach($provider->shipper->shipperAccounts as $shipperAccount){
+            $provider->login($shipperAccount);
+        }
 
 
         return 0;
