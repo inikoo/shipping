@@ -59,16 +59,16 @@ class GlsSk extends Shipper_Provider {
         );
 
 
-       // try {
+
+        try {
 
             $client = new SoapClient($this->api_url, $soapOptions);
 
 
-        //} catch (SoapFault $e) {
-        //    $result['errors'] = ['Soap API connection error'];
-        //    return $result;
-       // }
-
+        } catch (SoapFault $e) {
+            $result['errors'] = ['Soap API connection error'];
+            return $result;
+        }
 
 
         //print_r($request);
