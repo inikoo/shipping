@@ -138,12 +138,10 @@ class ApcGb extends Shipper_Provider {
 
         }
 
-
         $params = [
             'CollectionDate'  => $pickup_date->format('d/m/Y'),
             'ReadyAt'         => Arr::get($pickUp, 'ready', '16:30'),
             'ClosedAt'        => Arr::get($pickUp, 'end', '17:00'),
-            // 'ProductCode'     => $request->get('service_type', 'ND16'),
             'Reference'       => $request->get('reference'),
             'Delivery'        => [
                 'CompanyName'  => $name,
@@ -169,9 +167,20 @@ class ApcGb extends Shipper_Provider {
 
 
         if ($request->get('service_type') != '') {
-            if ($request->get('service_type') != 'Auto') {
-                $params['ProductCode'] = $request->get('service_type');
+            $params['ProductCode'] = $request->get('service_type');
+
+            if ($params['ProductCode'] == 'MP16' or $params['ProductCode'] == 'CP16') {
+                $params['ShipmentDetails']['NumberOfPieces'] = 1;
+
+                $weight = $params['ShipmentDetails']['Items']['Item'][0]['Weight'];
+                unset($params['ShipmentDetails']['Items']['Item']);
+                $params['ShipmentDetails']['Items']['Item'][0]['Type']   = 'ALL';
+                $params['ShipmentDetails']['Items']['Item'][0]['Weight'] = $weight;
+
+
             }
+
+
         } else {
 
             $productCode = '';
@@ -191,7 +200,6 @@ class ApcGb extends Shipper_Provider {
                 }
 
 
-
                 if ($parcelsData[0]['weight'] <= 5 and $dimensions[0] <= 45 and $dimensions[1] <= 35 and $dimensions[2] <= 20) {
                     $productCode = 'LW16';
                 }
@@ -207,10 +215,12 @@ class ApcGb extends Shipper_Provider {
                 $productCode = 'TDAY';
             }
 
-            if($productCode!=''){
-                $params['ProductCode'] = $productCode;
+            if ($productCode == '') {
+                $productCode = 'ND16';
 
             }
+
+            $params['ProductCode'] = $productCode;
 
         }
 

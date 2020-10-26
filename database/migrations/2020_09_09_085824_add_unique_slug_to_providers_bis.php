@@ -6,8 +6,7 @@
  */
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+
 
 class AddUniqueSlugToProvidersBis extends Migration
 {
@@ -18,9 +17,7 @@ class AddUniqueSlugToProvidersBis extends Migration
      */
     public function up()
     {
-        Schema::table('apc_gb_shipper_providers', function (Blueprint $table) {
-            $table->string('slug')->unique()->change();
-        });
+
 
 
     }
