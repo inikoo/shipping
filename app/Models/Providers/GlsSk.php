@@ -126,7 +126,7 @@ class GlsSk extends Shipper_Provider {
 
         $tenant_postal_code = trim(Arr::get($tenant->data['address'], 'sorting_code').' '.Arr::get($tenant->data['address'], 'postal_code'));
         if (Arr::get($tenant->data['address'], 'country_code') == 'SK') {
-            $tenant_postal_code = preg_replace('/SK-/i', '', $tenant_postal_code);
+            $tenant_postal_code = preg_replace('/SK-?/i', '', $tenant_postal_code);
         }
 
 
