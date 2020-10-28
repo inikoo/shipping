@@ -113,6 +113,17 @@ class DpdSk extends Shipper_Provider {
 
     function prepareShipment($shipperAccount, $request, $pickUp, $shipTo, $parcelsData, $cash_on_delivery) {
 
+
+
+        foreach($parcelsData as $key=>$value){
+            if($value['weight']>31.5){
+                $parcelsData[$key]['weight']='31.5';
+            }elseif($value['weight']<0.1){
+                $parcelsData[$key]['weight']='0.1';
+            }
+        }
+
+
         try {
             $pickup_date = new Carbon(Arr::get($pickUp, 'date'));
         } catch (Exception $e) {
@@ -175,6 +186,10 @@ class DpdSk extends Shipper_Provider {
         $postcode=trim(Arr::get($shipTo, 'sorting_code').' '.Arr::get($shipTo, 'postal_code'));
         if(!in_array($country->code,['GB','NL'])){
             $postcode  = preg_replace("/[^0-9]/", '', $postcode);
+        }
+
+        if($country->code=='IE'){
+            $postcode  ='';
         }
 
         $reference = preg_replace("/[^A-Za-z0-9]/", '', $request->get('reference'));
