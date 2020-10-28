@@ -186,6 +186,16 @@ class DpdSk extends Shipper_Provider {
         $street       = preg_replace("/²/", '2', $street);
         $streetDetail = preg_replace("/²/", '2', $streetDetail);
 
+
+        $street       = preg_replace("/'/", '', $street);
+        $streetDetail = preg_replace("/'/", '', $streetDetail);
+
+        $street       = preg_replace("/`/", '', $street);
+        $streetDetail = preg_replace("/`/", '', $streetDetail);
+
+        $street       = preg_replace("/\"/", '', $street);
+        $streetDetail = preg_replace("/\"/", '', $streetDetail);
+
         $street = preg_replace("/Ø/", 'ø', $street);
         $streetDetail = preg_replace("/Ø/", 'ø', $streetDetail);
 
