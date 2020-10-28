@@ -16,6 +16,7 @@ use Illuminate\Support\Arr;
 use Carbon\Carbon;
 use ReflectionException;
 use Yasumi\Yasumi;
+use Illuminate\Support\Str;
 
 
 /**
@@ -198,6 +199,9 @@ class DpdSk extends Shipper_Provider {
         $street       = preg_replace("/&/", ' ', Arr::get($shipTo, 'address_line_1'));
         $streetDetail = preg_replace("/&/", '', Arr::get($shipTo, 'address_line_2'));
 
+
+
+
         $street       = preg_replace("/²/", '2', $street);
         $streetDetail = preg_replace("/²/", '2', $streetDetail);
 
@@ -213,6 +217,10 @@ class DpdSk extends Shipper_Provider {
 
         $street = preg_replace("/Ø/", 'ø', $street);
         $streetDetail = preg_replace("/Ø/", 'ø', $streetDetail);
+
+
+        $streetDetail=Str::limit($streetDetail,35);
+
 
         $phone = trim(Arr::get($shipTo, 'phone'));
         if (!preg_match('/^\+/', $phone) and $phone != '') {
