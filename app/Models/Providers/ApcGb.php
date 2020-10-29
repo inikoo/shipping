@@ -211,7 +211,7 @@ class ApcGb extends Shipper_Provider {
                 $productCode = 'RD2';
             }
 
-            if (preg_match('/^ZE/', $postalCode)) {
+            if (preg_match('/^(ZE|KW)/', $postalCode)) {
                 $productCode = 'TDAY';
             }
 
