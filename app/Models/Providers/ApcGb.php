@@ -219,7 +219,16 @@ class ApcGb extends Shipper_Provider {
 
 
         if (preg_match('/^BT/', $postalCode)) {
-            $params['ProductCode'] = 'RD2';
+            $components=preg_split('/\s/',$postalCode);
+            $postalCode='RD1';
+            if(count($components)==2){
+                $number=preg_replace('/[^0-9]/','',$components[0]);
+                if($number>17){
+                    $postalCode='RD2';
+                }
+            }
+            $params['Delivery']['PostalCode']=$postalCode;
+            $params['ProductCode'] = 'ROAD';
         }
 
         if (preg_match('/^(ZE|KW)/', $postalCode)) {
