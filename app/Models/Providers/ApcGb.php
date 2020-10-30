@@ -61,7 +61,7 @@ class ApcGb extends Shipper_Provider {
             ]
         );
         $apiResponse = $this->call_api(
-            $this->api_url.'Orders.json', $headers, $params
+            $this->api_url.'Orders.json', $headers, json_encode($params)
         );
 
 
@@ -155,7 +155,7 @@ class ApcGb extends Shipper_Provider {
                     'PersonName'   => Arr::get($shipTo, 'contact'),
                     'PhoneNumber'  => Arr::get($shipTo, 'phone'),
                     'Email'        => Arr::get($shipTo, 'email'),
-                    'Instructions' => $request->get('note'),
+                    'Instructions' => preg_replace("/[^A-Za-z0-9 \-]/", '', $request->get('note')),
                 ],
 
             ],
@@ -238,7 +238,7 @@ class ApcGb extends Shipper_Provider {
         ];
 
         $apiResponse = $this->call_api(
-            $this->api_url.'Orders/'.$labelID.'.json', $headers, [], 'GET'
+            $this->api_url.'Orders/'.$labelID.'.json', $headers, json_encode([]), 'GET'
         );
 
         return base64_decode($apiResponse['data']['Orders']['Order']['Label']['Content']);

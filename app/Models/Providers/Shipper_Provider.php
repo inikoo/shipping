@@ -89,7 +89,7 @@ class Shipper_Provider extends Model {
 
     }
 
-    public function call_api($url, $headers, $params, $method = 'POST') {
+    public function call_api($url, $headers, $params, $method = 'POST', $result_encoding = 'json') {
 
         $curl = curl_init();
 
@@ -103,15 +103,18 @@ class Shipper_Provider extends Model {
                      CURLOPT_FOLLOWLOCATION => true,
                      CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
                      CURLOPT_CUSTOMREQUEST  => $method,
-                     CURLOPT_POSTFIELDS     => json_encode($params),
+                     CURLOPT_POSTFIELDS     => $params,
                      CURLOPT_HTTPHEADER     => $headers,
                  )
         );
 
 
         $raw_response = curl_exec($curl);
-
-        $data = json_decode($raw_response, true);
+        if($result_encoding=='xml'){
+            $data = json_decode(json_encode(simplexml_load_string($raw_response)), true);
+        }else{
+            $data = json_decode($raw_response, true);
+        }
 
         $response = [
             'status' => curl_getinfo($curl, CURLINFO_HTTP_CODE),

@@ -36,34 +36,162 @@ class DpdGb extends Shipper_Provider {
     public function createLabel(Request $request, ShipperAccount $shipperAccount) {
 
 
-        if(Arr::get($shipperAccount->data,'geoSession')==''){
+        if (Arr::get($shipperAccount->data, 'geoSession') == '' or (gmdate('U') - Arr::get($shipperAccount->data, 'geoSessionDate', 0) > 43200)) {
             $this->login($shipperAccount);
         }
 
         $headers = [
-            "GeoSession: ".Arr::get($shipperAccount->data,'geoSession'),
+            "GeoSession: ".Arr::get($shipperAccount->data, 'geoSession'),
             "Content-Type: application/json",
             "Accept: application/json",
             'GeoClient: account/'.$shipperAccount->credentials['account_number']
         ];
 
 
-
-
-        $params = array(
-
-        );
-
+        $params = $this->get_shipment_parameters($request, $shipperAccount);
+        //dd($params);
 
         $apiResponse = $this->call_api(
-            $this->api_url.'shipping/shipment', $headers, $params
+            $this->api_url.'shipping/shipment', $headers, json_encode($params)
         );
+
+        dd($apiResponse);
 
 
     }
 
 
     function prepareShipment($shipperAccount, $request, $pickUp, $shipTo, $parcelsData, $cash_on_delivery) {
+
+
+        $orderData=json_decode($request['order'],true);
+
+
+       // dd($shipTo);
+
+        //$parcelsData=json_decode($request['order'],true);
+
+
+        $parcels=[];
+        $packageNumber=1;
+        foreach($parcelsData as $parcel){
+
+            $items=[];
+            foreach($parcel['items'] as $itemKey){
+                $items[]=[
+                    'productCode'=>Arr::get($orderData,"items.$itemKey.code"),
+                    'countryOfOrigin'=>Arr::get($orderData,"items.$itemKey.origin_country_code"),
+                    'numberOfItems'=>Arr::get($orderData,"items.$itemKey.qty"),
+                    'productItemsDescription'=>Arr::get($orderData,"items.$itemKey.name"),
+                    'productTypeDescription'=>Arr::get($orderData,"items.$itemKey.name"),
+                    'unitValue'=>Arr::get($orderData,"items.$itemKey.price"),
+
+
+
+
+
+
+                ];
+            }
+
+            $parcels[]=[
+                'packageNumber'=>$packageNumber,
+                'parcelProduct'=>$items
+            ];
+
+            $packageNumber++;
+        }
+
+
+
+        //print_r($shipperAccount->tenant->data);
+        return [
+            'jobId'=>null,
+            'collectionOnDelivery'=>false,
+            'generateCustomsData'=>'Y',
+            'invoice' => [
+                'invoiceShipperDetails' => [
+                    'contactDetails'=>[
+                        'contactName'=>Arr::get($shipperAccount->tenant->data,'contact'),
+                        'telephone'=>Arr::get($shipperAccount->tenant->data,'phone'),
+                    ],
+                    'address'=>[
+                        'organisation'=>Arr::get($shipperAccount->tenant->data,'organization'),
+                        'countryCode'=>Arr::get($shipperAccount->tenant->data,'address.country_code'),
+                        'street'=>Arr::get($shipperAccount->tenant->data,'address.address_line_1'),
+                        'locality'=>Arr::get($shipperAccount->tenant->data,'address.dependent_locality'),
+                        'town'=>Arr::get($shipperAccount->tenant->data,'address.locality'),
+                        'county'=>Arr::get($shipperAccount->tenant->data,'address.administrative_area'),
+
+
+                    ],
+                    'vatNumber'=>Arr::get($shipperAccount->tenant->data,'tax_number'),
+                ],
+                'invoiceDeliveryDetails'=>[
+                    'contactDetails'=>[
+                        'contactName'=>Arr::get($shipTo,'contact'),
+                        'telephone'=>Arr::get($shipTo,'phone'),
+                    ],
+                    'address'=>[
+                        'organisation'=>Arr::get($shipTo,'organization'),
+                        'countryCode'=>Arr::get($shipTo,'country_code'),
+                        'street'=>Arr::get($shipTo,'address_line_1'),
+                        'locality'=>Arr::get($shipTo,'dependent_locality'),
+                        'town'=>Arr::get($shipTo,'locality'),
+                        'county'=>Arr::get($shipTo,'administrative_area'),
+
+
+                    ],
+                    'vatNumber'=>Arr::get($shipTo,'tax_number'),
+                ]
+
+            ],
+            'collectionDate'=>$pickUp['date'].'T'.$pickUp['ready'].':00',
+            'consolidate'=>false,
+            'consignment'=>[
+                'consignmentNumber'=>null,
+                'consignmentRef'=>null,
+                'parcel'=>$parcels,
+                'collectionDetails' => [
+                    'contactDetails'=>[
+                        'contactName'=>Arr::get($shipperAccount->tenant->data,'contact'),
+                        'telephone'=>Arr::get($shipperAccount->tenant->data,'phone'),
+                    ],
+                    'address'=>[
+                        'organisation'=>Arr::get($shipperAccount->tenant->data,'organization'),
+                        'countryCode'=>Arr::get($shipperAccount->tenant->data,'address.country_code'),
+                        'street'=>Arr::get($shipperAccount->tenant->data,'address.address_line_1'),
+                        'locality'=>Arr::get($shipperAccount->tenant->data,'address.dependent_locality'),
+                        'town'=>Arr::get($shipperAccount->tenant->data,'address.locality'),
+                        'county'=>Arr::get($shipperAccount->tenant->data,'address.administrative_area'),
+
+
+                    ],
+                ],
+                'deliveryDetails'=>[
+                    'contactDetails'=>[
+                        'contactName'=>Arr::get($shipTo,'contact'),
+                        'telephone'=>Arr::get($shipTo,'phone'),
+                    ],
+                    'address'=>[
+                        'organisation'=>Arr::get($shipTo,'organization'),
+                        'countryCode'=>Arr::get($shipTo,'country_code'),
+                        'street'=>Arr::get($shipTo,'address_line_1'),
+                        'locality'=>Arr::get($shipTo,'dependent_locality'),
+                        'town'=>Arr::get($shipTo,'locality'),
+                        'county'=>Arr::get($shipTo,'administrative_area'),
+
+
+                    ],
+                    'notificationDetails'=>[
+                        'email'=>Arr::get($shipTo,'email'),
+                        'mobile'=>Arr::get($shipTo,'phone'),
+                    ]
+
+                ]
+
+            ]
+        ];
 
 
     }
@@ -82,18 +210,17 @@ class DpdGb extends Shipper_Provider {
 
 
         $apiResponse = $this->call_api(
-            $this->api_url.'user?action=login', $headers, $params
+            $this->api_url.'user?action=login', $headers, json_encode($params)
         );
 
-        if($apiResponse['status']==200 and !empty($apiResponse['data']['data']['geoSession'])){
-            $shippingAccountData=$shipperAccount->data;
-            $shippingAccountData['geoSession']=$apiResponse['data']['data']['geoSession'];
-            $shippingAccountData['geoSessionDate']=gmdate('Y-m-d H:i:s');
-            $shipperAccount->data=$shippingAccountData;
+        if ($apiResponse['status'] == 200 and !empty($apiResponse['data']['data']['geoSession'])) {
+            $shippingAccountData                   = $shipperAccount->data;
+            $shippingAccountData['geoSession']     = $apiResponse['data']['data']['geoSession'];
+            $shippingAccountData['geoSessionDate'] = gmdate('U');
+            $shipperAccount->data                  = $shippingAccountData;
             $shipperAccount->save();
 
         }
-
 
 
     }

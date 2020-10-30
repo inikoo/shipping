@@ -66,7 +66,7 @@ class DpdSk extends Shipper_Provider {
 
 
         $apiResponse = $this->call_api(
-            $this->api_url, ["Content-Type: application/json"], $params
+            $this->api_url, ["Content-Type: application/json"], json_encode($params)
         );
 
 
@@ -232,7 +232,7 @@ class DpdSk extends Shipper_Provider {
         return array(
             'reference'        => $reference,
             'delisId'          => $shipperAccount->credentials['delisId'],
-            'note'             => $request->get('note'),
+            'note'             => Str::limit($request->get('note'),35),
             'product'          => $request->get('shipping_product', 1),
             'pickup'           => array(
                 'date'       => $pickup_date->format('Ymd'),
@@ -252,7 +252,7 @@ class DpdSk extends Shipper_Provider {
                 'city'         => Arr::get($shipTo, 'locality'),
                 'phone'        => $phone,
                 'email'        => Arr::get($shipTo, 'email'),
-                'note'         => '',
+
             ),
             'parcels'          => ['parcel' => $parcelsData],
             'services'         => $services

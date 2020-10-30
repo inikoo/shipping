@@ -14,7 +14,9 @@
         "doctrine/dbal": "^2.10",
         "laravel/lumen-framework": "^8.0",
         "sentry/sentry-laravel": "^1.8",
-        "tymon/jwt-auth": "^1.0"
+        "spatie/array-to-xml": "^2.14",
+        "tymon/jwt-auth": "^1.0",
+      "ext-simplexml": "*"
     },
     "require-dev": {
         "fzaninotto/faker": "^1.9.1",

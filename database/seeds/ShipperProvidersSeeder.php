@@ -11,6 +11,7 @@ use App\Models\Providers\DpdSk;
 use App\Models\Providers\GlsEs;
 use App\Models\Providers\GlsSk;
 use App\Models\Providers\Postmen;
+use App\Models\Providers\WhistlGb;
 use Illuminate\Database\Seeder;
 
 class ShipperProvidersSeeder extends Seeder {
@@ -67,6 +68,14 @@ class ShipperProvidersSeeder extends Seeder {
             $shipper_provider->save();
         }catch (Exception $e){
             print "GLS ES already in the database\n";
+        }
+
+        try{
+            $shipper_provider       = new WhistlGb();
+            $shipper_provider->slug = 'v1';
+            $shipper_provider->save();
+        }catch (Exception $e){
+            print "Whistl Gb already in the database\n";
         }
 
 

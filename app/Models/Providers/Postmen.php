@@ -68,7 +68,7 @@ class Postmen extends Shipper_Provider {
             'credentials' => $credentials
         ];
 
-        $response = $this->call_api($this->api_url.'shipper-accounts', $this->headers, $params);
+        $response = $this->call_api($this->api_url.'shipper-accounts', $this->headers, json_encode($params));
 
         if ($response['status'] != 200) {
             $this->errors = [Arr::get($response, 'errors')];
@@ -119,7 +119,7 @@ class Postmen extends Shipper_Provider {
         );
 
         $apiResponse = $this->call_api(
-            $this->api_url.'labels', $this->headers, $this->get_shipment_parameters($request, $shipperAccount)
+            $this->api_url.'labels', $this->headers, json_encode($this->get_shipment_parameters($request, $shipperAccount))
         );
 
         $result = [];
