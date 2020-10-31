@@ -8,9 +8,12 @@
 namespace App\Models\Providers;
 
 
+use App\Models\PdfLabel;
+use App\Models\Shipment;
 use App\Models\ShipperAccount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Spatie\ArrayToXml\ArrayToXml;
 
 
@@ -33,30 +36,90 @@ class WhistlGb extends Shipper_Provider {
         'password' => ['required'],
     ];
 
-    function createLabel(Request $request, ShipperAccount $shipperAccount) {
+    function createLabel(Shipment $shipment, Request $request, ShipperAccount $shipperAccount) {
 
 
-        if (Arr::get($shipperAccount->data, 'accessToken') == '' or (gmdate('U') - Arr::get($shipperAccount->data, 'expiresAt', 0) >=   36000)) {
+        if (Arr::get($shipperAccount->data, 'accessToken') == '' or (gmdate('U') - Arr::get($shipperAccount->data, 'expiresAt', 0) >= 36000)) {
             $this->login($shipperAccount);
         }
-        exit;
+
 
         $headers = [
-            "GeoSession: ".Arr::get($shipperAccount->data, 'geoSession'),
-            "Content-Type: application/json",
-            "Accept: application/json",
-            'GeoClient: account/'.$shipperAccount->credentials['account_number']
+            "Content-Type: application/xml; charset=utf-8",
+            "Accept: */*",
+            "Authorization: bearer ".Arr::get($shipperAccount->data, 'accessToken')
         ];
 
 
         $params = $this->get_shipment_parameters($request, $shipperAccount);
-        //dd($params);
+
+        $shipment->request=$params;
+        $shipment->save();
 
         $apiResponse = $this->call_api(
-            $this->api_url.'shipping/shipment', $headers, json_encode($params)
+            $this->api_url.'Shipment?RequestedLabelFormat=PDF&RequestedLabelSize=6', $headers, $this->preprocess_parameters(
+            'Shipment', [
+            'xmlns:xsi' => 'http://www.w3.org/2001/XMLSchema-instance',
+            'xmlns:xsd' => 'http://www.w3.org/2001/XMLSchema',
+            'xmlns'     => 'http://api.parcelhub.net/schemas/api/parcelhub-api-v0.4.xsd'
+        ], $params
+        ), 'POST', 'xml'
         );
 
-        dd($apiResponse);
+
+
+        $response=$apiResponse['data'];
+
+        $result = [];
+
+        if ($apiResponse['status'] == 200) {
+
+            $shipment->status='success';
+
+            $pdfChecksum = '';
+            $number_labels=0;
+            foreach ($response['Packages'] as $package_index=>$package) {
+
+
+                foreach ($package['PackageShippingInfo']['Labels'] as $label_index=>$label) {
+
+                    //unset($response['Packages'][$package_index][$label_index]['LabelData']);
+                    $number_labels++;
+                    $pdfData     = $label['LabelData'];
+                    $pdfChecksum = md5($pdfData);
+                    $pdfLabel    = new PdfLabel(
+                        [
+                            'checksum' => $pdfChecksum,
+                            'data'     => $pdfData
+                        ]
+                    );
+                    $shipment->pdf_label()->save($pdfLabel);
+
+
+                }
+
+
+            }
+
+            if($number_labels==1){
+                unset($response['Packages']['Package']['PackageShippingInfo']['Labels']['Label']['LabelData']);
+
+            }
+
+            $result['tracking_number'] = Arr::get($apiResponse, 'data.ParcelhubShipmentId');
+            $result['shipment_id']     = Arr::get($apiResponse, 'data.ShippingInfo.CourierTrackingNumber');
+            $result['label_link']      = env('APP_URL').'/labels/'.$pdfChecksum;
+
+
+        } else {
+            $shipment->status='error';
+            $result['errors'] = [json_encode($response)];
+        }
+
+
+        $shipment->response=$response;
+        $shipment->save();
+        return $result;
 
 
     }
@@ -64,128 +127,57 @@ class WhistlGb extends Shipper_Provider {
     function prepareShipment($shipperAccount, $request, $pickUp, $shipTo, $parcelsData, $cash_on_delivery) {
 
 
-        $orderData = json_decode($request['order'], true);
-
-
-        // dd($shipTo);
-
-        //$parcelsData=json_decode($request['order'],true);
-
-
-        $parcels       = [];
-        $packageNumber = 1;
+        $parcels = [];
         foreach ($parcelsData as $parcel) {
 
-            $items = [];
-            foreach ($parcel['items'] as $itemKey) {
-                $items[] = [
-                    'productCode'             => Arr::get($orderData, "items.$itemKey.code"),
-                    'countryOfOrigin'         => Arr::get($orderData, "items.$itemKey.origin_country_code"),
-                    'numberOfItems'           => Arr::get($orderData, "items.$itemKey.qty"),
-                    'productItemsDescription' => Arr::get($orderData, "items.$itemKey.name"),
-                    'productTypeDescription'  => Arr::get($orderData, "items.$itemKey.name"),
-                    'unitValue'               => Arr::get($orderData, "items.$itemKey.price"),
-
-
-                ];
-            }
 
             $parcels[] = [
-                'packageNumber' => $packageNumber,
-                'parcelProduct' => $items
+                'Package' => [
+                    'Dimensions' => [
+                        'Length' => Arr::get($parcel, 'depth'),
+                        'Width'  => Arr::get($parcel, 'width'),
+                        'Height' => Arr::get($parcel, 'height'),
+                    ],
+                    'Weight'     => Arr::get($parcel, 'weight'),
+                    'Contents'   => 'Goods'
+                ]
             ];
 
-            $packageNumber++;
         }
 
 
-        //print_r($shipperAccount->tenant->data);
         return [
-            'jobId'                => null,
-            'collectionOnDelivery' => false,
-            'generateCustomsData'  => 'Y',
-            'invoice'              => [
-                'invoiceShipperDetails'  => [
-                    'contactDetails' => [
-                        'contactName' => Arr::get($shipperAccount->tenant->data, 'contact'),
-                        'telephone'   => Arr::get($shipperAccount->tenant->data, 'phone'),
-                    ],
-                    'address'        => [
-                        'organisation' => Arr::get($shipperAccount->tenant->data, 'organization'),
-                        'countryCode'  => Arr::get($shipperAccount->tenant->data, 'address.country_code'),
-                        'street'       => Arr::get($shipperAccount->tenant->data, 'address.address_line_1'),
-                        'locality'     => Arr::get($shipperAccount->tenant->data, 'address.dependent_locality'),
-                        'town'         => Arr::get($shipperAccount->tenant->data, 'address.locality'),
-                        'county'       => Arr::get($shipperAccount->tenant->data, 'address.administrative_area'),
+            'Account'             => $shipperAccount->credentials['account'],
+            'CollectionDetails'   => [
+                'CollectionDate'      => $pickUp['date'],
+                'CollectionReadyTime' => $pickUp['ready'].':00',
+            ],
+            'DeliveryAddress'     => [
+                'ContactName' => Arr::get($shipTo, 'contact'),
+                'CompanyName' => Arr::get($shipTo, 'organization'),
+                'Email'       => Arr::get($shipTo, 'email'),
+                'Phone'       => trim(Arr::get($shipTo, 'phone')),
+                'Address1'    => Arr::get($shipTo, 'address_line_1'),
+                'Address2'    => Arr::get($shipTo, 'address_line_2'),
+                'City'        => Arr::get($shipTo, 'locality'),
+                'Area'        => Arr::get($shipTo, 'administrative_area'),
+                'Postcode'    => Arr::get($shipTo, 'postal_code'),
+                'Country'     => Arr::get($shipTo, 'country_code'),
+                'AddressType' => 'Business'
 
-
-                    ],
-                    'vatNumber'      => Arr::get($shipperAccount->tenant->data, 'tax_number'),
-                ],
-                'invoiceDeliveryDetails' => [
-                    'contactDetails' => [
-                        'contactName' => Arr::get($shipTo, 'contact'),
-                        'telephone'   => Arr::get($shipTo, 'phone'),
-                    ],
-                    'address'        => [
-                        'organisation' => Arr::get($shipTo, 'organization'),
-                        'countryCode'  => Arr::get($shipTo, 'country_code'),
-                        'street'       => Arr::get($shipTo, 'address_line_1'),
-                        'locality'     => Arr::get($shipTo, 'dependent_locality'),
-                        'town'         => Arr::get($shipTo, 'locality'),
-                        'county'       => Arr::get($shipTo, 'administrative_area'),
-
-
-                    ],
-                    'vatNumber'      => Arr::get($shipTo, 'tax_number'),
-                ]
 
             ],
-            'collectionDate'       => $pickUp['date'].'T'.$pickUp['ready'].':00',
-            'consolidate'          => false,
-            'consignment'          => [
-                'consignmentNumber' => null,
-                'consignmentRef'    => null,
-                'parcel'            => $parcels,
-                'collectionDetails' => [
-                    'contactDetails' => [
-                        'contactName' => Arr::get($shipperAccount->tenant->data, 'contact'),
-                        'telephone'   => Arr::get($shipperAccount->tenant->data, 'phone'),
-                    ],
-                    'address'        => [
-                        'organisation' => Arr::get($shipperAccount->tenant->data, 'organization'),
-                        'countryCode'  => Arr::get($shipperAccount->tenant->data, 'address.country_code'),
-                        'street'       => Arr::get($shipperAccount->tenant->data, 'address.address_line_1'),
-                        'locality'     => Arr::get($shipperAccount->tenant->data, 'address.dependent_locality'),
-                        'town'         => Arr::get($shipperAccount->tenant->data, 'address.locality'),
-                        'county'       => Arr::get($shipperAccount->tenant->data, 'address.administrative_area'),
-
-
-                    ],
-                ],
-                'deliveryDetails'   => [
-                    'contactDetails'      => [
-                        'contactName' => Arr::get($shipTo, 'contact'),
-                        'telephone'   => Arr::get($shipTo, 'phone'),
-                    ],
-                    'address'             => [
-                        'organisation' => Arr::get($shipTo, 'organization'),
-                        'countryCode'  => Arr::get($shipTo, 'country_code'),
-                        'street'       => Arr::get($shipTo, 'address_line_1'),
-                        'locality'     => Arr::get($shipTo, 'dependent_locality'),
-                        'town'         => Arr::get($shipTo, 'locality'),
-                        'county'       => Arr::get($shipTo, 'administrative_area'),
-
-
-                    ],
-                    'notificationDetails' => [
-                        'email'  => Arr::get($shipTo, 'email'),
-                        'mobile' => Arr::get($shipTo, 'phone'),
-                    ]
-
-                ]
-
+            'Reference1'          => $request->get('reference'),
+            'SpecialInstructions' => Str::limit($request->get('note'), 35),
+            'ContentsDescription' => 'Goods',
+            'Packages'            => $parcels,
+            'ServiceInfo'         => [
+                'ServiceId'          => '78108',
+                'ServiceProviderId'  => '77',
+                'ServiceCustomerUID' => '6459',
             ]
+
+
         ];
 
 
@@ -207,19 +199,23 @@ class WhistlGb extends Shipper_Provider {
 
 
         $apiResponse = $this->call_api(
-            $this->api_url.'TokenV2', $headers, $this->preprocess_parameters($params), 'POST', 'xml'
+            $this->api_url.'TokenV2', $headers, $this->preprocess_parameters(
+            'RequestToken', [
+            'xmlns:xsi' => 'http://www.w3.org/2001/XMLSchema-instance',
+            'xmlns:xsd' => 'http://www.w3.org/2001/XMLSchema',
+
+        ], $params
+        ), 'POST', 'xml'
 
 
         );
 
 
-        print_r($apiResponse);
-
         if ($apiResponse['status'] == 200 and !empty($apiResponse['data']['access_token'])) {
             $shippingAccountData                 = $shipperAccount->data;
             $shippingAccountData['refreshToken'] = $apiResponse['data']['refreshToken'];
             $shippingAccountData['accessToken']  = $apiResponse['data']['access_token'];
-            $shippingAccountData['expiresAt']   = gmdate('U') + $apiResponse['data']['expiresIn'];
+            $shippingAccountData['expiresAt']    = gmdate('U') + $apiResponse['data']['expiresIn'];
 
             $shipperAccount->data = $shippingAccountData;
             $shipperAccount->save();
@@ -230,16 +226,12 @@ class WhistlGb extends Shipper_Provider {
     }
 
 
-    private function preprocess_parameters($params) {
+    private function preprocess_parameters($rootElement, $attributes, $params) {
 
         return ArrayToXml::convert(
             $params, [
-            'rootElementName' => 'RequestToken',
-            '_attributes'     => [
-                'xmlns:xsi' => 'http://www.w3.org/2001/XMLSchema-instance',
-                'xmlns:xsd' => 'http://www.w3.org/2001/XMLSchema',
-
-            ],
+            'rootElementName' => $rootElement,
+            '_attributes'     => $attributes,
         ], true, 'UTF-8'
         );
 

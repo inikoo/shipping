@@ -8,6 +8,7 @@
 namespace App\Models\Providers;
 
 
+use App\Models\Shipment;
 use App\Models\ShipperAccount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -33,7 +34,7 @@ class DpdGb extends Shipper_Provider {
         'account_number' => ['required'],
     ];
 
-    public function createLabel(Request $request, ShipperAccount $shipperAccount) {
+    public function createLabel(Shipment $shipment,Request $request, ShipperAccount $shipperAccount) {
 
 
         if (Arr::get($shipperAccount->data, 'geoSession') == '' or (gmdate('U') - Arr::get($shipperAccount->data, 'geoSessionDate', 0) > 43200)) {
@@ -49,7 +50,8 @@ class DpdGb extends Shipper_Provider {
 
 
         $params = $this->get_shipment_parameters($request, $shipperAccount);
-        //dd($params);
+        $shipment->request = $params;
+        $shipment->save();
 
         $apiResponse = $this->call_api(
             $this->api_url.'shipping/shipment', $headers, json_encode($params)

@@ -9,6 +9,7 @@ namespace App\Models\Providers;
 
 
 use App\Models\PdfLabel;
+use App\Models\Shipment;
 use App\Models\ShipperAccount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -42,7 +43,7 @@ class GlsSk extends Shipper_Provider {
 
     ];
 
-    public function createLabel(Request $request, ShipperAccount $shipperAccount) {
+    public function createLabel(Shipment $shipment,Request $request, ShipperAccount $shipperAccount) {
 
 
         $printLabelsRequest = array(
@@ -50,6 +51,9 @@ class GlsSk extends Shipper_Provider {
             'Password'   => hex2bin($shipperAccount->credentials['password']),
             'ParcelList' => $this->get_shipment_parameters($request, $shipperAccount)
         );
+
+        $shipment->request = $printLabelsRequest['ParcelList'];
+        $shipment->save();
 
         $request = array("printLabelsRequest" => $printLabelsRequest);
 
@@ -59,23 +63,18 @@ class GlsSk extends Shipper_Provider {
         );
 
 
-
         try {
-
             $client = new SoapClient($this->api_url, $soapOptions);
-
-
         } catch (SoapFault $e) {
             $result['errors'] = ['Soap API connection error'];
             return $result;
         }
 
 
-        //print_r($request);
-
         $apiResponse = $client->PrintLabels($request)->PrintLabelsResult;
 
-
+        $shipment->response = $apiResponse['data'];
+        $shipment->status   = 'error';
 
         $result = [];
         if (count((array)$apiResponse->PrintLabelsErrorList)) {
@@ -90,13 +89,15 @@ class GlsSk extends Shipper_Provider {
                     'data'     => base64_encode($pdfData)
                 ]
             );
-            $shipperAccount->pdf_labels()->save($pdfLabel);
+            $shipment->pdf_label()->save($pdfLabel);
+            $shipment->status = 'success';
 
             $result['tracking_number'] = $apiResponse->PrintLabelsInfoList->PrintLabelsInfo->ParcelNumber;
-            $result['shipment_id']     = $apiResponse->PrintLabelsInfoList->PrintLabelsInfo->ParcelId;
+            $result['shipment_id']     = $shipment->id;
             $result['label_link']      = env('APP_URL').'/labels/'.$pdfChecksum;
 
         }
+        $shipment->save();
 
 
         return $result;

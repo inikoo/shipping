@@ -9,6 +9,7 @@ namespace App\Models\Providers;
 
 
 use App\Models\Country;
+use App\Models\Shipment;
 use App\Models\ShipperAccount;
 use Carbon\Carbon;
 use Exception;
@@ -46,7 +47,7 @@ class ApcGb extends Shipper_Provider {
 
     }
 
-    public function createLabel(Request $request, ShipperAccount $shipperAccount) {
+    public function createLabel(Shipment $shipment, Request $request, ShipperAccount $shipperAccount) {
 
 
         $headers = [
@@ -55,14 +56,20 @@ class ApcGb extends Shipper_Provider {
         ];
 
 
-        $params      = array(
+        $params            = array(
             'Orders' => [
                 'Order' => $this->get_shipment_parameters($request, $shipperAccount)
             ]
         );
+        $shipment->request = $params;
+        $shipment->save();
         $apiResponse = $this->call_api(
             $this->api_url.'Orders.json', $headers, json_encode($params)
         );
+
+
+        $shipment->response = $apiResponse['data'];
+        $shipment->status   = 'error';
 
 
         $result = [];
@@ -70,11 +77,15 @@ class ApcGb extends Shipper_Provider {
 
         if ($apiResponse['status'] == 200) {
             if ($apiResponse['data']['Orders']['Messages']['Code'] == 'SUCCESS') {
+
+                $shipment->status = 'success';
+
+
                 $data = $apiResponse['data']['Orders']['Order'];
 
                 $result['tracking_number'] = $data['WayBill'];
                 $result['label_link']      = env('APP_URL').'/async_labels/'.$shipperAccount->id.'/'.$data['OrderNumber'];
-                $result['shipment_id']     = $data['OrderNumber'];
+                $result['shipment_id']     = $shipment->id;
 
                 return $result;
             }
@@ -82,6 +93,7 @@ class ApcGb extends Shipper_Provider {
 
         }
         $result['errors'] = [json_encode($apiResponse['data'])];
+        $shipment->save();
 
 
         return $result;
@@ -219,16 +231,16 @@ class ApcGb extends Shipper_Provider {
 
 
         if (preg_match('/^BT/', $postalCode)) {
-            $components=preg_split('/\s/',$postalCode);
-            $postalCode='RD1';
-            if(count($components)==2){
-                $number=preg_replace('/[^0-9]/','',$components[0]);
-                if($number>17){
-                    $postalCode='RD2';
+            $components = preg_split('/\s/', $postalCode);
+            $postalCode = 'RD1';
+            if (count($components) == 2) {
+                $number = preg_replace('/[^0-9]/', '', $components[0]);
+                if ($number > 17) {
+                    $postalCode = 'RD2';
                 }
             }
-            $params['Delivery']['PostalCode']=$postalCode;
-            $params['ProductCode'] = 'ROAD';
+            $params['Delivery']['PostalCode'] = $postalCode;
+            $params['ProductCode']            = 'ROAD';
         }
 
         if (preg_match('/^(ZE|KW)/', $postalCode)) {

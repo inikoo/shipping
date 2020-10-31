@@ -28,9 +28,9 @@ class PdfLabel extends Model {
         'checksum','data'
     ];
 
-    public function shipper_account()
+    public function shipment()
     {
-        return $this->belongsTo('App\Models\ShipperAccount');
+        return $this->belongsTo('App\Models\Shipment');
     }
 
 

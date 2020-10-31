@@ -9,6 +9,7 @@ namespace App\Models\Providers;
 
 
 use App\Models\Country;
+use App\Models\Shipment;
 use App\Models\ShipperAccount;
 use Exception;
 use Illuminate\Http\Request;
@@ -47,7 +48,7 @@ class DpdSk extends Shipper_Provider {
     ];
 
 
-    public function createLabel(Request $request, ShipperAccount $shipperAccount) {
+    public function createLabel(Shipment $shipment, Request $request, ShipperAccount $shipperAccount) {
 
         $params = array(
             'jsonrpc' => '2.0',
@@ -64,11 +65,15 @@ class DpdSk extends Shipper_Provider {
             'id'      => 'null',
         );
 
+        $shipment->request = $params['shipment'];
+        $shipment->save();
 
         $apiResponse = $this->call_api(
             $this->api_url, ["Content-Type: application/json"], json_encode($params)
         );
 
+        $shipment->response = $apiResponse['data'];
+        $shipment->status   = 'error';
 
         $result = [];
         if (!empty($apiResponse['data']['error'])) {
@@ -101,11 +106,14 @@ class DpdSk extends Shipper_Provider {
 
                 }
             } else {
+                $shipment->status          = 'success';
                 $result['tracking_number'] = substr($res['mpsid'], 0, -8);
                 $result['label_link']      = $res['label'];
+                $result['shipment_id']     = $shipment->id;
 
             }
         }
+        $shipment->save();
 
         return $result;
 
@@ -115,12 +123,11 @@ class DpdSk extends Shipper_Provider {
     function prepareShipment($shipperAccount, $request, $pickUp, $shipTo, $parcelsData, $cash_on_delivery) {
 
 
-
-        foreach($parcelsData as $key=>$value){
-            if($value['weight']>31.5){
-                $parcelsData[$key]['weight']='31.5';
-            }elseif($value['weight']<0.1){
-                $parcelsData[$key]['weight']='0.1';
+        foreach ($parcelsData as $key => $value) {
+            if ($value['weight'] > 31.5) {
+                $parcelsData[$key]['weight'] = '31.5';
+            } elseif ($value['weight'] < 0.1) {
+                $parcelsData[$key]['weight'] = '0.1';
             }
         }
 
@@ -184,13 +191,18 @@ class DpdSk extends Shipper_Provider {
             ];
         }
 
-        $postcode=trim(Arr::get($shipTo, 'sorting_code').' '.Arr::get($shipTo, 'postal_code'));
-        if(!in_array($country->code,['GB','NL'])){
-            $postcode  = preg_replace("/[^0-9]/", '', $postcode);
+        $postcode = trim(Arr::get($shipTo, 'sorting_code').' '.Arr::get($shipTo, 'postal_code'));
+        if (!in_array(
+            $country->code, [
+            'GB',
+            'NL'
+        ]
+        )) {
+            $postcode = preg_replace("/[^0-9]/", '', $postcode);
         }
 
-        if($country->code=='IE'){
-            $postcode  ='';
+        if ($country->code == 'IE') {
+            $postcode = '';
         }
 
         $reference = preg_replace("/[^A-Za-z0-9]/", '', $request->get('reference'));
@@ -198,8 +210,6 @@ class DpdSk extends Shipper_Provider {
 
         $street       = preg_replace("/&/", ' ', Arr::get($shipTo, 'address_line_1'));
         $streetDetail = preg_replace("/&/", '', Arr::get($shipTo, 'address_line_2'));
-
-
 
 
         $street       = preg_replace("/²/", '2', $street);
@@ -215,11 +225,11 @@ class DpdSk extends Shipper_Provider {
         $street       = preg_replace("/\"/", '', $street);
         $streetDetail = preg_replace("/\"/", '', $streetDetail);
 
-        $street = preg_replace("/Ø/", 'ø', $street);
+        $street       = preg_replace("/Ø/", 'ø', $street);
         $streetDetail = preg_replace("/Ø/", 'ø', $streetDetail);
 
 
-        $streetDetail=Str::limit($streetDetail,35);
+        $streetDetail = Str::limit($streetDetail, 35);
 
 
         $phone = trim(Arr::get($shipTo, 'phone'));
@@ -227,12 +237,12 @@ class DpdSk extends Shipper_Provider {
             $phone = '+'.$phone;
         }
 
-        $pickup_date=$this->get_pick_up_date($pickup_date);
+        $pickup_date = $this->get_pick_up_date($pickup_date);
 
         return array(
             'reference'        => $reference,
             'delisId'          => $shipperAccount->credentials['delisId'],
-            'note'             => Str::limit($request->get('note'),35),
+            'note'             => Str::limit($request->get('note'), 35),
             'product'          => $request->get('shipping_product', 1),
             'pickup'           => array(
                 'date'       => $pickup_date->format('Ymd'),
@@ -261,32 +271,38 @@ class DpdSk extends Shipper_Provider {
 
     }
 
-    private function get_pick_up_date($pickup_date){
+    private function get_pick_up_date($pickup_date) {
         if ($pickup_date->isWeekend() or $this->is_bank_holiday($pickup_date)) {
             return $this->get_pick_up_date($pickup_date->addDay());
         }
+
         return $pickup_date;
 
     }
 
 
-    private function is_bank_holiday($date){
+    private function is_bank_holiday($date) {
 
-        $formatted_date=$date->format('Y-m-d');
+        $formatted_date = $date->format('Y-m-d');
 
         try {
             $holidays = Yasumi::create('Slovakia', $date->format('Y'));
             foreach ($holidays as $day) {
-                if($day==$formatted_date and in_array($day->getType(),['bank','official']) ){
+                if ($day == $formatted_date and in_array(
+                        $day->getType(), [
+                        'bank',
+                        'official'
+                    ]
+                    )) {
                     return true;
                 }
             }
+
             return false;
 
         } catch (ReflectionException $e) {
             return false;
         }
-
 
 
     }

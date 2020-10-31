@@ -8,6 +8,7 @@
 namespace App\Models\Providers;
 
 
+use App\Models\Shipment;
 use App\Models\ShipperAccount;
 use Illuminate\Http\Request;
 
@@ -30,7 +31,7 @@ class GlsEs extends Shipper_Provider {
 
     ];
 
-    public function createLabel(Request $request, ShipperAccount $shipperAccount) {
+    public function createLabel(Shipment $shipment,Request $request, ShipperAccount $shipperAccount) {
 
 
     }

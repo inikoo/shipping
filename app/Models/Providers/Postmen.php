@@ -9,6 +9,7 @@ namespace App\Models\Providers;
 
 
 use App\Models\Country;
+use App\Models\Shipment;
 use App\Models\ShipperAccount;
 use App\Models\Tenant;
 use Illuminate\Http\Request;
@@ -110,7 +111,7 @@ class Postmen extends Shipper_Provider {
         }
     }
 
-    public function createLabel(Request $request, ShipperAccount $shipperAccount) {
+    public function createLabel(Shipment $shipment,Request $request, ShipperAccount $shipperAccount) {
 
 
         $this->headers = array(
@@ -118,22 +119,31 @@ class Postmen extends Shipper_Provider {
             "postmen-api-key: ".$this->data['api_key']
         );
 
+        $processed_request=$this->get_shipment_parameters($request, $shipperAccount);
+        $shipment->request = $processed_request;
+        $shipment->save();
+
         $apiResponse = $this->call_api(
-            $this->api_url.'labels', $this->headers, json_encode($this->get_shipment_parameters($request, $shipperAccount))
+            $this->api_url.'labels', $this->headers, json_encode($processed_request)
         );
+
+        $shipment->response = $apiResponse['data'];
+        $shipment->status   = 'error';
 
         $result = [];
         if ($apiResponse['data']['meta']['code'] != 200) {
             $this->errors       = [$apiResponse['data']['meta']];
             $result['errors'][] = [$apiResponse['data']['meta']['code'] => trim($apiResponse['data']['meta']['message'].' '.json_encode($apiResponse['data']['meta']['details']))];
         } else {
+            $shipment->status = 'success';
 
             $result['tracking_number'] = join($apiResponse['data']['data']['tracking_numbers']);
             $result['label_link']  = $apiResponse['data']['data']['files']['label']['url'];
-            $result['shipment_id'] = $apiResponse['data']['data']['id'];
+            $result['shipment_id'] = $shipment->id;
 
 
         }
+        $shipment->save();
 
         return $result;
 
