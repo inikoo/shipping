@@ -49,6 +49,7 @@ class ApcGb extends Shipper_Provider {
 
     public function createLabel(Shipment $shipment, Request $request, ShipperAccount $shipperAccount) {
 
+        $debug=Arr::get($shipperAccount->data, 'debug') == 'Yes';
 
         $headers = [
             "remote-user: Basic ".base64_encode($shipperAccount->credentials['email'].':'.$shipperAccount->credentials['password']),
@@ -61,14 +62,28 @@ class ApcGb extends Shipper_Provider {
                 'Order' => $this->get_shipment_parameters($request, $shipperAccount)
             ]
         );
-        $shipment->request = $params;
-        $shipment->save();
+
+        if ($debug) {
+            $shipmentData=$shipment->data;
+            data_fill($shipmentData,'debug.request',$params);
+            $shipment->data=$shipmentData;
+            $shipment->save();
+        }
+
+
+
         $apiResponse = $this->call_api(
             $this->api_url.'Orders.json', $headers, json_encode($params)
         );
 
 
-        $shipment->response = $apiResponse['data'];
+        if ($debug) {
+            $shipmentData=$shipment->data;
+            data_fill($shipmentData,'debug.response', $apiResponse['data']);
+            $shipment->data=$shipmentData;
+        }
+
+
         $shipment->status   = 'error';
 
 

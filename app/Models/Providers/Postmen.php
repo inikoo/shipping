@@ -113,21 +113,34 @@ class Postmen extends Shipper_Provider {
 
     public function createLabel(Shipment $shipment,Request $request, ShipperAccount $shipperAccount) {
 
+        $debug=Arr::get($shipperAccount->data, 'debug') == 'Yes';
 
         $this->headers = array(
             "content-type: application/json",
             "postmen-api-key: ".$this->data['api_key']
         );
 
-        $processed_request=$this->get_shipment_parameters($request, $shipperAccount);
-        $shipment->request = $processed_request;
-        $shipment->save();
+        $params=$this->get_shipment_parameters($request, $shipperAccount);
+
+        if ($debug) {
+            $shipmentData=$shipment->data;
+            data_fill($shipmentData,'debug.request',$params);
+            $shipment->data=$shipmentData;
+            $shipment->save();
+        }
 
         $apiResponse = $this->call_api(
-            $this->api_url.'labels', $this->headers, json_encode($processed_request)
+            $this->api_url.'labels', $this->headers, json_encode($params)
         );
 
-        $shipment->response = $apiResponse['data'];
+
+        if ($debug) {
+            $shipmentData=$shipment->data;
+            data_fill($shipmentData,'debug.response', $apiResponse['data']);
+            $shipment->data=$shipmentData;
+        }
+
+
         $shipment->status   = 'error';
 
         $result = [];

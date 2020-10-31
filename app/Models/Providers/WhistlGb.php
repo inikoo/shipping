@@ -38,6 +38,8 @@ class WhistlGb extends Shipper_Provider {
 
     function createLabel(Shipment $shipment, Request $request, ShipperAccount $shipperAccount) {
 
+        $debug=Arr::get($shipperAccount->data, 'debug') == 'Yes';
+
 
         if (Arr::get($shipperAccount->data, 'accessToken') == '' or (gmdate('U') - Arr::get($shipperAccount->data, 'expiresAt', 0) >= 36000)) {
             $this->login($shipperAccount);
@@ -53,8 +55,16 @@ class WhistlGb extends Shipper_Provider {
 
         $params = $this->get_shipment_parameters($request, $shipperAccount);
 
-        $shipment->request=$params;
-        $shipment->save();
+
+
+        if ($debug) {
+            $shipmentData=$shipment->data;
+            data_fill($shipmentData,'debug.request',$params);
+            $shipment->data=$shipmentData;
+            $shipment->save();
+        }
+
+
 
         $apiResponse = $this->call_api(
             $this->api_url.'Shipment?RequestedLabelFormat=PDF&RequestedLabelSize=6', $headers, $this->preprocess_parameters(
@@ -70,6 +80,12 @@ class WhistlGb extends Shipper_Provider {
 
         $response=$apiResponse['data'];
 
+
+        if ($debug) {
+            $shipmentData=$shipment->data;
+            data_fill($shipmentData,'debug.response',$response);
+            $shipment->data=$shipmentData;
+        }
         $result = [];
 
         if ($apiResponse['status'] == 200) {
@@ -79,11 +95,7 @@ class WhistlGb extends Shipper_Provider {
             $pdfChecksum = '';
             $number_labels=0;
             foreach ($response['Packages'] as $package_index=>$package) {
-
-
                 foreach ($package['PackageShippingInfo']['Labels'] as $label_index=>$label) {
-
-                    //unset($response['Packages'][$package_index][$label_index]['LabelData']);
                     $number_labels++;
                     $pdfData     = $label['LabelData'];
                     $pdfChecksum = md5($pdfData);
@@ -94,17 +106,10 @@ class WhistlGb extends Shipper_Provider {
                         ]
                     );
                     $shipment->pdf_label()->save($pdfLabel);
-
-
                 }
-
-
             }
 
-            if($number_labels==1){
-                unset($response['Packages']['Package']['PackageShippingInfo']['Labels']['Label']['LabelData']);
 
-            }
 
             $result['tracking_number'] = Arr::get($apiResponse, 'data.ParcelhubShipmentId');
             $result['shipment_id']     = Arr::get($apiResponse, 'data.ShippingInfo.CourierTrackingNumber');
@@ -117,7 +122,8 @@ class WhistlGb extends Shipper_Provider {
         }
 
 
-        $shipment->response=$response;
+
+
         $shipment->save();
         return $result;
 

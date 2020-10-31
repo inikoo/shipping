@@ -36,6 +36,8 @@ class DpdGb extends Shipper_Provider {
 
     public function createLabel(Shipment $shipment,Request $request, ShipperAccount $shipperAccount) {
 
+        $debug=Arr::get($shipperAccount->data, 'debug') == 'Yes';
+
 
         if (Arr::get($shipperAccount->data, 'geoSession') == '' or (gmdate('U') - Arr::get($shipperAccount->data, 'geoSessionDate', 0) > 43200)) {
             $this->login($shipperAccount);
@@ -50,8 +52,12 @@ class DpdGb extends Shipper_Provider {
 
 
         $params = $this->get_shipment_parameters($request, $shipperAccount);
-        $shipment->request = $params;
-        $shipment->save();
+        if ($debug) {
+            $shipmentData=$shipment->data;
+            data_fill($shipmentData,'debug.request',$params);
+            $shipment->data=$shipmentData;
+            $shipment->save();
+        }
 
         $apiResponse = $this->call_api(
             $this->api_url.'shipping/shipment', $headers, json_encode($params)

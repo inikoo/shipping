@@ -45,6 +45,7 @@ class GlsSk extends Shipper_Provider {
 
     public function createLabel(Shipment $shipment,Request $request, ShipperAccount $shipperAccount) {
 
+        $debug=Arr::get($shipperAccount->data, 'debug') == 'Yes';
 
         $printLabelsRequest = array(
             'Username'   => $shipperAccount->credentials['username'],
@@ -52,8 +53,14 @@ class GlsSk extends Shipper_Provider {
             'ParcelList' => $this->get_shipment_parameters($request, $shipperAccount)
         );
 
-        $shipment->request = $printLabelsRequest['ParcelList'];
-        $shipment->save();
+
+        if ($debug) {
+            $shipmentData=$shipment->data;
+            data_fill($shipmentData,'debug.request',$printLabelsRequest['ParcelList']);
+            $shipment->data=$shipmentData;
+            $shipment->save();
+        }
+
 
         $request = array("printLabelsRequest" => $printLabelsRequest);
 
@@ -73,7 +80,11 @@ class GlsSk extends Shipper_Provider {
 
         $apiResponse = $client->PrintLabels($request)->PrintLabelsResult;
 
-        $shipment->response = $apiResponse['data'];
+        if ($debug) {
+            $shipmentData=$shipment->data;
+            data_fill($shipmentData,'debug.response', $apiResponse['data']);
+            $shipment->data=$shipmentData;
+        }
         $shipment->status   = 'error';
 
         $result = [];

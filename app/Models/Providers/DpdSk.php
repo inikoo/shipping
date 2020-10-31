@@ -50,6 +50,8 @@ class DpdSk extends Shipper_Provider {
 
     public function createLabel(Shipment $shipment, Request $request, ShipperAccount $shipperAccount) {
 
+        $debug=Arr::get($shipperAccount->data, 'debug') == 'Yes';
+
         $params = array(
             'jsonrpc' => '2.0',
             'method'  => 'create',
@@ -65,14 +67,24 @@ class DpdSk extends Shipper_Provider {
             'id'      => 'null',
         );
 
-        $shipment->request = $params['shipment'];
-        $shipment->save();
+        if ($debug) {
+            $shipmentData=$shipment->data;
+            data_fill($shipmentData,'debug.request',$params['shipment']);
+            $shipment->data=$shipmentData;
+            $shipment->save();
+        }
+
 
         $apiResponse = $this->call_api(
             $this->api_url, ["Content-Type: application/json"], json_encode($params)
         );
 
-        $shipment->response = $apiResponse['data'];
+        if ($debug) {
+            $shipmentData=$shipment->data;
+            data_fill($shipmentData,'debug.response', $apiResponse['data']);
+            $shipment->data=$shipmentData;
+        }
+
         $shipment->status   = 'error';
 
         $result = [];

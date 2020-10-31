@@ -22,9 +22,13 @@ class CreateShipmentsTable extends Migration
             $table->id();
             $table->foreignId('shipper_account_id')->constrained();
             $table->string('status')->default('processing')->index();
+            $table->string('reference')->nullable()->index();
+            $table->string('reference_2')->nullable()->index();
+            $table->string('reference_3')->nullable()->index();
+
+
             $table->jsonb('data');
-            $table->jsonb('request');
-            $table->jsonb('response');
+
             $table->timestampsTz();
             $table->index('created_at');
         });

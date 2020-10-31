@@ -18,23 +18,17 @@ use Illuminate\Database\Eloquent\Model;
  * @property integer $shipper_account_id
  * @property string  $status
  * @property array   $data
- * @property array   $request
- * @property object  $response
  *
  * @mixin \Illuminate\Database\Eloquent\Builder
  */
 class Shipment extends Model {
 
     protected $casts = [
-        'data'     => 'array',
-        'request'  => 'array',
-        'response' => 'array',
+        'data'     => 'array'
     ];
 
     protected $attributes = [
-        'data'     => '{}',
-        'request'  => '{}',
-        'response' => '{}'
+        'data'     => '{}'
     ];
 
     protected $guarded = [];

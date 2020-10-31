@@ -9,6 +9,7 @@ namespace App\Models;
 
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 
 
 /**
@@ -57,22 +58,33 @@ class ShipperAccount extends Model {
 
     public function createLabel($request) {
 
-        $shipment    = new Shipment(
+        $shipmentData = [];
+        if (Arr::get($this->data, 'debug') == 'Yes') {
+            $shipmentData = [
+                'debug' => [
+                    'original_request' => $request->all()
+                ]
+            ];
+        }
+
+        $shipment = new Shipment(
             [
-                'data'     => $request->all()
+                'reference'=>$request->get('reference'),
+                'reference_2'=>$request->get('reference_2'),
+                'reference_3'=>$request->get('reference_3'),
+                'data' => $shipmentData
+
             ]
         );
         $this->shipments()->save($shipment);
 
 
-        return $this->shipper->provider->createLabel($shipment,$request, $this);
+        return $this->shipper->provider->createLabel($shipment, $request, $this);
     }
 
     public function get_label($labelID) {
         return $this->shipper->provider->get_label($labelID, $this);
     }
-
-
 
 
 }
