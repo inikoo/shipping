@@ -54,9 +54,10 @@ class GlsSk extends Shipper_Provider {
         );
 
 
+
         if ($debug) {
             $shipmentData=$shipment->data;
-            data_fill($shipmentData,'debug.request',$printLabelsRequest['ParcelList']);
+            data_fill($shipmentData,'debug.request',json_decode(json_encode($printLabelsRequest['ParcelList']), true));
             $shipment->data=$shipmentData;
             $shipment->save();
         }
@@ -77,12 +78,12 @@ class GlsSk extends Shipper_Provider {
             return $result;
         }
 
-
         $apiResponse = $client->PrintLabels($request)->PrintLabelsResult;
+
 
         if ($debug) {
             $shipmentData=$shipment->data;
-            data_fill($shipmentData,'debug.response', $apiResponse['data']);
+            data_fill($shipmentData,'debug.response', json_decode(json_encode($apiResponse), true));
             $shipment->data=$shipmentData;
         }
         $shipment->status   = 'error';
