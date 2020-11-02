@@ -62,7 +62,7 @@ class DpdSk extends Shipper_Provider {
                         'Email'     => $shipperAccount->credentials['username'],
                     ),
                 ),
-                'shipment'    => [$this->get_shipment_parameters($request, $shipperAccount)],
+                'shipment'    => [$this->getShipmentParameters($request, $shipperAccount)],
             ),
             'id'      => 'null',
         );
@@ -75,7 +75,7 @@ class DpdSk extends Shipper_Provider {
         }
 
 
-        $apiResponse = $this->call_api(
+        $apiResponse = $this->callApi(
             $this->api_url, ["Content-Type: application/json"], json_encode($params)
         );
 
@@ -318,6 +318,8 @@ class DpdSk extends Shipper_Provider {
 
 
     }
+
+
 
 }
 

@@ -59,7 +59,7 @@ class ApcGb extends Shipper_Provider {
 
         $params            = array(
             'Orders' => [
-                'Order' => $this->get_shipment_parameters($request, $shipperAccount)
+                'Order' => $this->getShipmentParameters($request, $shipperAccount)
             ]
         );
 
@@ -72,7 +72,7 @@ class ApcGb extends Shipper_Provider {
 
 
 
-        $apiResponse = $this->call_api(
+        $apiResponse = $this->callApi(
             $this->api_url.'Orders.json', $headers, json_encode($params)
         );
 
@@ -266,14 +266,14 @@ class ApcGb extends Shipper_Provider {
 
     }
 
-    function get_label($labelID, $shipperAccount) {
+    function getLabel($labelID, $shipperAccount) {
 
         $headers = [
             "remote-user: Basic ".base64_encode($shipperAccount->credentials['email'].':'.$shipperAccount->credentials['password']),
             "Content-Type: application/json"
         ];
 
-        $apiResponse = $this->call_api(
+        $apiResponse = $this->callApi(
             $this->api_url.'Orders/'.$labelID.'.json', $headers, json_encode([]), 'GET'
         );
 

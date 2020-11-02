@@ -50,7 +50,7 @@ class GlsSk extends Shipper_Provider {
         $printLabelsRequest = array(
             'Username'   => $shipperAccount->credentials['username'],
             'Password'   => hex2bin($shipperAccount->credentials['password']),
-            'ParcelList' => $this->get_shipment_parameters($request, $shipperAccount)
+            'ParcelList' => $this->getShipmentParameters($request, $shipperAccount)
         );
 
 

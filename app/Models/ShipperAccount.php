@@ -82,8 +82,12 @@ class ShipperAccount extends Model {
         return $this->shipper->provider->createLabel($shipment, $request, $this);
     }
 
-    public function get_label($labelID) {
-        return $this->shipper->provider->get_label($labelID, $this);
+    public function getLabel($labelID) {
+        return $this->shipper->provider->getLabel($labelID, $this);
+    }
+
+    public function getServices($request) {
+        return $this->shipper->provider->getServices($request, $this);
     }
 
 

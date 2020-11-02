@@ -20,13 +20,14 @@ $router->get(
 }
 );
 
-$router->get('labels/{checksum}', 'LabelController@display');
-$router->get('async_labels/{shipperAccountID}/{labelId}', 'LabelController@async_display');
+$router->get('labels/{checksum}', 'ShipmentController@display_label');
+$router->get('async_labels/{shipperAccountID}/{labelId}', 'ShipmentController@display_async_label');
 
 $router->group(
     ['middleware' => 'auth'], function ($router) {
     $router->get('me', 'AuthController@me');
     $router->post('shipper-accounts', 'ShipperAccountController@create');
-    $router->post('labels', 'LabelController@create');
+    $router->post('shipment', 'ShipmentController@create');
+    $router->get('services', 'ShipmentController@services');
 
 });

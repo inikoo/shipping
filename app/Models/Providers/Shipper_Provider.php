@@ -89,9 +89,11 @@ class Shipper_Provider extends Model {
 
     }
 
-    public function call_api($url, $headers, $params, $method = 'POST', $result_encoding = 'json') {
+    public function callApi($url, $headers, $params, $method = 'POST', $result_encoding = 'json') {
 
         $curl = curl_init();
+
+
 
 
         curl_setopt_array(
@@ -110,9 +112,8 @@ class Shipper_Provider extends Model {
         );
 
 
-
         $raw_response = curl_exec($curl);
-      //  dd($raw_response);
+
         if ($result_encoding == 'xml') {
             $data = json_decode(json_encode(simplexml_load_string($raw_response)), true);
         } else {
@@ -142,7 +143,7 @@ class Shipper_Provider extends Model {
     }
 
 
-    public function get_shipment_parameters(Request $request, ShipperAccount $shipperAccount) {
+    public function getShipmentParameters(Request $request, ShipperAccount $shipperAccount) {
 
 
         $parcels          = json_decode($request->get('parcels'), true);
@@ -163,7 +164,11 @@ class Shipper_Provider extends Model {
         //
     }
 
-    function get_label($labelID, $shipperAccount) {
+    function getLabel($labelID, $shipperAccount) {
+        //
+    }
+
+    function getServices($request, $shipperAccount) {
         //
     }
 

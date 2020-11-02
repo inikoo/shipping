@@ -15,7 +15,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Validator;
 
 
-class LabelController extends Controller {
+class ShipmentController extends Controller {
 
 
     /**
@@ -24,7 +24,88 @@ class LabelController extends Controller {
      * @return \Illuminate\Http\JsonResponse
      * @throws \Exception
      */
-    public function create(Request $request) {
+    function create(Request $request) {
+
+
+        if($errors=$this->validateShipmentRequest($request)){
+            return response()->json(['errors' => $errors], 422);
+        }
+
+        /**
+         * @var $shipper_account \App\Models\ShipperAccount
+         */
+        $shipper_account = (new ShipperAccount)->find($request->get('shipper_account_id'));
+
+
+        $response = $shipper_account->createLabel($request);
+
+
+        $status = Arr::get($response, 'status', 200);
+        $errors = Arr::get($response, 'errors', []);
+
+        if (count($errors) > 0) {
+            if (env('SENTRY_URL')) {
+                throw new Exception(json_encode($errors));
+
+            } else {
+                return response()->json(['errors' => $errors], $status);
+
+            }
+
+        }
+
+        return response()->json(
+            [
+                'label_link'      => Arr::get($response, 'label_link'),
+                'tracking_number' => Arr::get($response, 'tracking_number'),
+                'shipment_id'     => Arr::get($response, 'shipment_id')
+            ], $status
+        );
+
+
+    }
+
+    function display_label($checksum) {
+        $pdfLabel = (new PdfLabel())->where('checksum', $checksum)->first();
+        return response(base64_decode($pdfLabel->data), 200)->header('Content-Type', 'application/pdf');
+
+    }
+
+    function display_async_label($shipperAccountID , $labelId) {
+
+        /**
+         * @var $shipper_account \App\Models\ShipperAccount
+         */
+        $shipper_account = (new ShipperAccount)->find($shipperAccountID);
+        return response($shipper_account->getLabel($labelId), 200)->header('Content-Type', 'application/pdf');
+
+
+    }
+
+    function services(Request $request){
+
+        if($errors=$this->validateShipmentRequest($request)){
+            return response()->json(['errors' => $errors], 422);
+        }
+
+        /**
+         * @var $shipper_account \App\Models\ShipperAccount
+         */
+        $shipper_account = (new ShipperAccount)->find($request->get('shipper_account_id'));
+
+        $response = $shipper_account->getServices($request);
+
+        return response()->json(
+            [
+                'services'      => Arr::get($response, 'services',[]),
+
+            ], Arr::get($response, 'status', 200)
+        );
+
+    }
+
+
+    private function validateShipmentRequest(Request $request){
 
 
         $validator = Validator::make(
@@ -59,7 +140,7 @@ class LabelController extends Controller {
 
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return  $validator->errors();
         }
 
 
@@ -122,60 +203,12 @@ class LabelController extends Controller {
 
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return  $validator->errors();
         }
 
-
-        /**
-         * @var $shipper_account \App\Models\ShipperAccount
-         */
-        $shipper_account = (new ShipperAccount)->find($request->get('shipper_account_id'));
-
-
-        $response = $shipper_account->createLabel($request);
-
-
-        $status = Arr::get($response, 'status', 200);
-        $errors = Arr::get($response, 'errors', []);
-
-        if (count($errors) > 0) {
-            if (env('SENTRY_URL')) {
-                throw new Exception(json_encode($errors));
-
-            } else {
-                return response()->json(['errors' => $errors], $status);
-
-            }
-
-        }
-
-        return response()->json(
-            [
-                'label_link'      => Arr::get($response, 'label_link'),
-                'tracking_number' => Arr::get($response, 'tracking_number'),
-                'shipment_id'     => Arr::get($response, 'shipment_id')
-            ], $status
-        );
-
+        return false;
 
     }
 
-
-    public function display($checksum) {
-        $pdfLabel = (new PdfLabel())->where('checksum', $checksum)->first();
-        return response(base64_decode($pdfLabel->data), 200)->header('Content-Type', 'application/pdf');
-
-    }
-
-    public function async_display($shipperAccountID , $labelId) {
-
-        /**
-         * @var $shipper_account \App\Models\ShipperAccount
-         */
-        $shipper_account = (new ShipperAccount)->find($shipperAccountID);
-        return response($shipper_account->get_label($labelId), 200)->header('Content-Type', 'application/pdf');
-
-
-    }
 
 }

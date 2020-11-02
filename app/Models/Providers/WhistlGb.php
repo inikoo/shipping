@@ -53,7 +53,7 @@ class WhistlGb extends Shipper_Provider {
         ];
 
 
-        $params = $this->get_shipment_parameters($request, $shipperAccount);
+        $params = $this->getShipmentParameters($request, $shipperAccount);
 
 
 
@@ -66,7 +66,7 @@ class WhistlGb extends Shipper_Provider {
 
 
 
-        $apiResponse = $this->call_api(
+        $apiResponse = $this->callApi(
             $this->api_url.'Shipment?RequestedLabelFormat=PDF&RequestedLabelSize=6', $headers, $this->preprocess_parameters(
             'Shipment', [
             'xmlns:xsi' => 'http://www.w3.org/2001/XMLSchema-instance',
@@ -204,7 +204,7 @@ class WhistlGb extends Shipper_Provider {
         ];
 
 
-        $apiResponse = $this->call_api(
+        $apiResponse = $this->callApi(
             $this->api_url.'TokenV2', $headers, $this->preprocess_parameters(
             'RequestToken', [
             'xmlns:xsi' => 'http://www.w3.org/2001/XMLSchema-instance',
