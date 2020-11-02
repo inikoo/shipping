@@ -112,9 +112,9 @@ class Shipper_Provider extends Model {
 
         $raw_response = curl_exec($curl);
 
-        if($result_encoding=='xml'){
-            dd($raw_response);
-        }
+        //if($result_encoding=='xml'){
+        //    dd($raw_response);
+        //}
 
         //dd($raw_response);
         if ($result_encoding == 'xml') {
