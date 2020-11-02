@@ -207,7 +207,7 @@ class DpdSk extends Shipper_Provider {
         if (!in_array(
             $country->code, [
             'GB',
-            'NL'
+            'NL','EI'
         ]
         )) {
             $postcode = preg_replace("/[^0-9]/", '', $postcode);
