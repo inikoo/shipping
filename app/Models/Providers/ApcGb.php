@@ -15,6 +15,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 
 
 /**
@@ -180,7 +181,7 @@ class ApcGb extends Shipper_Provider {
                 'CountryCode'  => $country->code,
                 'Contact'      => [
                     'PersonName'   => Arr::get($shipTo, 'contact'),
-                    'PhoneNumber'  => Arr::get($shipTo, 'phone'),
+                    'PhoneNumber'  => Str::limit(Arr::get($shipTo, 'phone'),15),
                     'Email'        => Arr::get($shipTo, 'email'),
                     'Instructions' => preg_replace("/[^A-Za-z0-9 \-]/", '', $request->get('note')),
                 ],
