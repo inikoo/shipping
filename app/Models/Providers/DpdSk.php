@@ -203,15 +203,20 @@ class DpdSk extends Shipper_Provider {
                 ]
             ];
         }
+
+
         $postcode = trim(Arr::get($shipTo, 'sorting_code').' '.Arr::get($shipTo, 'postal_code'));
+
+
         if (!in_array(
             $country->code, [
             'GB',
-            'NL','EI'
+            'NL','IE'
         ]
         )) {
             $postcode = preg_replace("/[^0-9]/", '', $postcode);
         }
+
 
         $reference = preg_replace("/[^A-Za-z0-9]/", '', $request->get('reference'));
 
