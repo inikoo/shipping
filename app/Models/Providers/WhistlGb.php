@@ -29,7 +29,7 @@ class WhistlGb extends Shipper_Provider {
 
     protected $table = 'whistl_gb_shipper_providers';
 
-    protected string $api_url = "https://api.test.parcelhub.net/1.0/";
+    protected string $api_url = "https://api.parcelhub.net/1.0/";
 
     protected $credentials_rules = [
         'username' => ['required',],
@@ -134,22 +134,42 @@ class WhistlGb extends Shipper_Provider {
 
 
         $parcels = [];
+        $weight=0;
         foreach ($parcelsData as $parcel) {
 
 
             $parcels[] = [
                 'Package' => [
-                    'Dimensions' => [
-                        'Length' => Arr::get($parcel, 'depth'),
-                        'Width'  => Arr::get($parcel, 'width'),
-                        'Height' => Arr::get($parcel, 'height'),
-                    ],
+                  //  'Dimensions' => [
+                  //      'Length' => Arr::get($parcel, 'depth'),
+                  //      'Width'  => Arr::get($parcel, 'width'),
+                  //      'Height' => Arr::get($parcel, 'height'),
+                  //  ],
                     'Weight'     => Arr::get($parcel, 'weight'),
                     'Contents'   => 'Goods'
                 ]
             ];
 
+            if($weight<Arr::get($parcel, 'weight')){
+                $weight= Arr::get($parcel, 'weight');
+            }
+
         }
+
+        if($weight<0.50){
+            $serviceInfo=[
+                'ServiceId'          => '78108',
+                'ServiceProviderId'  => '77',
+                'ServiceCustomerUID' => '21751',
+            ];
+        }else{
+            $serviceInfo=[
+                'ServiceId'          => '78109',
+                'ServiceProviderId'  => '77',
+                'ServiceCustomerUID' => '21753',
+            ];
+        }
+
 
 
         return [
@@ -177,11 +197,7 @@ class WhistlGb extends Shipper_Provider {
             'SpecialInstructions' => Str::limit($request->get('note'), 35),
             'ContentsDescription' => 'Goods',
             'Packages'            => $parcels,
-            'ServiceInfo'         => [
-                'ServiceId'          => '78108',
-                'ServiceProviderId'  => '77',
-                'ServiceCustomerUID' => '6459',
-            ]
+            'ServiceInfo'         => $serviceInfo
 
 
         ];
