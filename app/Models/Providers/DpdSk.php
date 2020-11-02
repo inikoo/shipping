@@ -69,7 +69,7 @@ class DpdSk extends Shipper_Provider {
 
         if ($debug) {
             $shipmentData=$shipment->data;
-            data_fill($shipmentData,'debug.request',$params['shipment']);
+            data_fill($shipmentData,'debug.request',$params['params']['shipment']);
             $shipment->data=$shipmentData;
             $shipment->save();
         }
