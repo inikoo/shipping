@@ -170,21 +170,22 @@ class ApcGb extends Shipper_Provider {
             'CollectionDate'  => $pickup_date->format('d/m/Y'),
             'ReadyAt'         => Arr::get($pickUp, 'ready', '16:30'),
             'ClosedAt'        => Arr::get($pickUp, 'end', '17:00'),
-            'Reference'       => $request->get('reference'),
+            'Reference'       => Str::limit($request->get('reference'),34),
             'Delivery'        => [
-                'CompanyName'  => $name,
-                'AddressLine1' => Arr::get($shipTo, 'address_line_1'),
-                'AddressLine2' => $address2,
+                'CompanyName'  => Str::limit($name,34),
+                'AddressLine1' => Str::limit(Arr::get($shipTo, 'address_line_1'),63),
+                'AddressLine2' => Str::limit($address2,63),
                 'PostalCode'   => $postalCode,
-                'City'         => Arr::get($shipTo, 'locality'),
-                'County'       => Arr::get($shipTo, 'administrative_area'),
+                'City'         => Str::limit(Arr::get($shipTo, 'locality'),31),
+                'County'       => Str::limit(Arr::get($shipTo, 'administrative_area'),31),
                 'CountryCode'  => $country->code,
                 'Contact'      => [
-                    'PersonName'   => Arr::get($shipTo, 'contact'),
+                    'PersonName'   => Str::limit(Arr::get($shipTo, 'contact'),63),
                     'PhoneNumber'  => Str::limit(Arr::get($shipTo, 'phone'),15),
                     'Email'        => Arr::get($shipTo, 'email'),
-                    'Instructions' => preg_replace("/[^A-Za-z0-9 \-]/", '', $request->get('note')),
                 ],
+                'Instructions' => Str::limit(preg_replace("/[^A-Za-z0-9 \-]/", '', $request->get('note')),63),
+
 
             ],
             'ShipmentDetails' => [
