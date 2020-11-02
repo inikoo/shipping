@@ -85,6 +85,7 @@ class WhistlGb extends Shipper_Provider {
             $shipmentData=$shipment->data;
             data_fill($shipmentData,'debug.response',$response);
             $shipment->data=$shipmentData;
+            $shipment->save();
         }
         $result = [];
 
