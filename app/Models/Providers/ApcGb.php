@@ -101,7 +101,7 @@ class ApcGb extends Shipper_Provider {
                 $result['tracking_number'] = $data['WayBill'];
                 $result['label_link']      = env('APP_URL').'/async_labels/'.$shipperAccount->id.'/'.$data['OrderNumber'];
                 $result['shipment_id']     = $shipment->id;
-
+                $shipment->save();
                 return $result;
             }
 
