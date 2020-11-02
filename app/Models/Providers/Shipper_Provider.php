@@ -94,8 +94,6 @@ class Shipper_Provider extends Model {
         $curl = curl_init();
 
 
-
-
         curl_setopt_array(
             $curl, array(
                      CURLOPT_URL            => $url,
@@ -113,7 +111,7 @@ class Shipper_Provider extends Model {
 
 
         $raw_response = curl_exec($curl);
-
+        //dd($raw_response);
         if ($result_encoding == 'xml') {
             $data = json_decode(json_encode(simplexml_load_string($raw_response)), true);
         } else {
