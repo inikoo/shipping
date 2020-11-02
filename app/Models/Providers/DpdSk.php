@@ -81,8 +81,9 @@ class DpdSk extends Shipper_Provider {
 
         if ($debug) {
             $shipmentData=$shipment->data;
-            data_fill($shipmentData,'debug.response', $apiResponse['data']);
+            data_fill($shipmentData,'debug.response', Arr::get($apiResponse,'data','No Data'));
             $shipment->data=$shipmentData;
+            $shipment->save();
         }
 
         $shipment->status   = 'error';
