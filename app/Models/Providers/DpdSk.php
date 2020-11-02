@@ -214,9 +214,7 @@ class DpdSk extends Shipper_Provider {
             $postcode = preg_replace("/[^0-9]/", '', $postcode);
         }
 
-        if ($country->code == 'IE') {
-            $postcode = '';
-        }
+
 
         $reference = preg_replace("/[^A-Za-z0-9]/", '', $request->get('reference'));
 
