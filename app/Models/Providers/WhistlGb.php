@@ -140,11 +140,11 @@ class WhistlGb extends Shipper_Provider {
 
             $parcels[] = [
                 'Package' => [
-                  //  'Dimensions' => [
-                  //      'Length' => Arr::get($parcel, 'depth'),
-                  //      'Width'  => Arr::get($parcel, 'width'),
-                  //      'Height' => Arr::get($parcel, 'height'),
-                  //  ],
+                    'Dimensions' => [
+                        'Length' => Arr::get($parcel, 'depth'),
+                        'Width'  => Arr::get($parcel, 'width'),
+                        'Height' => Arr::get($parcel, 'height'),
+                    ],
                     'Weight'     => Arr::get($parcel, 'weight'),
                     'Contents'   => 'Goods'
                 ]
