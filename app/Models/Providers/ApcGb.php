@@ -259,7 +259,9 @@ class ApcGb extends Shipper_Provider {
             $params['ProductCode']            = 'ROAD';
         }
 
-        if (preg_match('/^(ZE|KW|AB)/', $postalCode)) {
+
+
+        if (preg_match('/^((JE|GG|IM|KW|HS|ZE|IV)\d+)|AB(30|33|34|35|36|37|38)|AB[4-5][0-9]|DD[89]|FK(16|17|18|19|20|21)|PA[2-8][0-9]|PH((15|16|17|18|19)|[2-5][0-9])|KA(27|28)/)', $postalCode)) {
             $params['ProductCode'] = 'TDAY';
         }
 
