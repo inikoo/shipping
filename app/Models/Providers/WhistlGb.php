@@ -29,45 +29,30 @@ class WhistlGb extends Shipper_Provider {
 
     protected $table = 'whistl_gb_shipper_providers';
 
-    protected string $api_url = "https://api.parcelhub.net/1.0/";
+    protected string $api_url = "https://api.test.parcelhub.net/1.0/";
 
     protected $credentials_rules = [
         'username' => ['required',],
         'password' => ['required'],
     ];
 
+
     function createLabel(Shipment $shipment, Request $request, ShipperAccount $shipperAccount) {
 
-        $debug=Arr::get($shipperAccount->data, 'debug') == 'Yes';
-
-
-        if (Arr::get($shipperAccount->data, 'accessToken') == '' or (gmdate('U') - Arr::get($shipperAccount->data, 'expiresAt', 0) >= 36000)) {
-            $this->login($shipperAccount);
-        }
-
-
-        $headers = [
-            "Content-Type: application/xml; charset=utf-8",
-            "Accept: */*",
-            "Authorization: bearer ".Arr::get($shipperAccount->data, 'accessToken')
-        ];
-
+        $debug = Arr::get($shipperAccount->data, 'debug') == 'Yes';
 
         $params = $this->getShipmentParameters($request, $shipperAccount);
 
-
-
         if ($debug) {
-            $shipmentData=$shipment->data;
-            data_fill($shipmentData,'debug.request',$params);
-            $shipment->data=$shipmentData;
+            $shipmentData = $shipment->data;
+            data_fill($shipmentData, 'debug.request', $params);
+            $shipment->data = $shipmentData;
             $shipment->save();
         }
 
 
-
         $apiResponse = $this->callApi(
-            $this->api_url.'Shipment?RequestedLabelFormat=PDF&RequestedLabelSize=6', $headers, $this->preprocess_parameters(
+            $this->api_url.'Shipment?RequestedLabelFormat=PDF&RequestedLabelSize=6', $this->getHeaders($shipperAccount), $this->preprocess_parameters(
             'Shipment', [
             'xmlns:xsi' => 'http://www.w3.org/2001/XMLSchema-instance',
             'xmlns:xsd' => 'http://www.w3.org/2001/XMLSchema',
@@ -77,26 +62,25 @@ class WhistlGb extends Shipper_Provider {
         );
 
 
-
-        $response=$apiResponse['data'];
+        $response = $apiResponse['data'];
 
 
         if ($debug) {
-            $shipmentData=$shipment->data;
-            data_fill($shipmentData,'debug.response',$response);
-            $shipment->data=$shipmentData;
+            $shipmentData = $shipment->data;
+            data_fill($shipmentData, 'debug.response', $response);
+            $shipment->data = $shipmentData;
             $shipment->save();
         }
         $result = [];
 
         if ($apiResponse['status'] == 200) {
 
-            $shipment->status='success';
+            $shipment->status = 'success';
 
-            $pdfChecksum = '';
-            $number_labels=0;
-            foreach ($response['Packages'] as $package_index=>$package) {
-                foreach ($package['PackageShippingInfo']['Labels'] as $label_index=>$label) {
+            $pdfChecksum   = '';
+            $number_labels = 0;
+            foreach ($response['Packages'] as $package_index => $package) {
+                foreach ($package['PackageShippingInfo']['Labels'] as $label_index => $label) {
                     $number_labels++;
                     $pdfData     = $label['LabelData'];
                     $pdfChecksum = md5($pdfData);
@@ -111,21 +95,19 @@ class WhistlGb extends Shipper_Provider {
             }
 
 
-
             $result['tracking_number'] = Arr::get($apiResponse, 'data.ParcelhubShipmentId');
             $result['shipment_id']     = Arr::get($apiResponse, 'data.ShippingInfo.CourierTrackingNumber');
             $result['label_link']      = env('APP_URL').'/labels/'.$pdfChecksum;
 
 
         } else {
-            $shipment->status='error';
+            $shipment->status = 'error';
             $result['errors'] = [json_encode($response)];
         }
 
 
-
-
         $shipment->save();
+
         return $result;
 
 
@@ -135,46 +117,36 @@ class WhistlGb extends Shipper_Provider {
 
 
         $parcels = [];
-        $weight=0;
+        $weight  = 0;
         foreach ($parcelsData as $parcel) {
 
 
             $parcels[] = [
                 'Package' => [
                     'Dimensions' => [
-                        'Length' => Arr::get($parcel, 'depth'),
-                        'Width'  => Arr::get($parcel, 'width'),
-                        'Height' => Arr::get($parcel, 'height'),
+                        'Length' => max(floor(Arr::get($parcel, 'depth')),1),
+                        'Width'  => max(floor(Arr::get($parcel, 'width')),1),
+                        'Height' => max(floor(Arr::get($parcel, 'height')),1),
                     ],
                     'Weight'     => Arr::get($parcel, 'weight'),
                     'Contents'   => 'Goods'
                 ]
             ];
 
-            if($weight<Arr::get($parcel, 'weight')){
-                $weight= Arr::get($parcel, 'weight');
+            if ($weight < Arr::get($parcel, 'weight')) {
+                $weight = Arr::get($parcel, 'weight');
             }
 
         }
 
-        if($weight<0.50){
-            $serviceInfo=[
-                'ServiceId'          => '78108',
-                'ServiceProviderId'  => '77',
-                'ServiceCustomerUID' => '21751',
-            ];
-        }else{
-            $serviceInfo=[
-                'ServiceId'          => '78109',
-                'ServiceProviderId'  => '77',
-                'ServiceCustomerUID' => '21753',
-            ];
-        }
+
+
+        $serviceInfo=json_decode($request->get('service_type'),true);
 
 
 
         return [
-            'Account'             => $shipperAccount->credentials['account'],
+            'Account'             => Arr::get($shipperAccount->credentials, 'account'),
             'CollectionDetails'   => [
                 'CollectionDate'      => $pickUp['date'],
                 'CollectionReadyTime' => $pickUp['ready'].':00',
@@ -260,5 +232,52 @@ class WhistlGb extends Shipper_Provider {
 
     }
 
+    function getServices($request, $shipperAccount) {
+
+
+        $apiResponse = $this->callApi(
+            $this->api_url.'Service/?AccountId='.Arr::get($shipperAccount->credentials, 'account'), $this->getHeaders($shipperAccount), '{}', 'GET','xml'
+        );
+
+        $services = [];
+        if ($apiResponse['status'] == 200) {
+
+            foreach ($apiResponse['data']['Service'] as $serviceData) {
+                $services[] = [
+                    'id'   => [
+                        $serviceData['ServiceIds']['ServiceId'],
+                        $serviceData['ServiceIds']['ServiceCustomerUID'],
+                        $serviceData['ServiceIds']['ServiceProviderId'],
+
+                    ],
+                    'code' => $serviceData['ServiceName'],
+                    'name' => $serviceData['ServiceDesc'],
+                    'type' => '',
+                    'data' => $serviceData
+
+
+                ];
+            }
+        }
+
+
+        return ['services' => $services];
+
+
+    }
+
+    private function getHeaders($shipperAccount) {
+        if (Arr::get($shipperAccount->data, 'accessToken') == '' or (gmdate('U') - Arr::get($shipperAccount->data, 'expiresAt', 0) >= 36000)) {
+            $this->login($shipperAccount);
+        }
+
+
+        return [
+            "Content-Type: application/xml; charset=utf-8",
+            "Accept: */*",
+            "Authorization: bearer ".Arr::get($shipperAccount->data, 'accessToken')
+        ];
+
+    }
 
 }
