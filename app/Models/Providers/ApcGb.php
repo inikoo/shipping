@@ -170,21 +170,21 @@ class ApcGb extends Shipper_Provider {
             'CollectionDate'  => $pickup_date->format('d/m/Y'),
             'ReadyAt'         => Arr::get($pickUp, 'ready', '16:30'),
             'ClosedAt'        => Arr::get($pickUp, 'end', '17:00'),
-            'Reference'       => Str::limit($request->get('reference'),34),
+            'Reference'       => Str::limit($request->get('reference'),30),
             'Delivery'        => [
-                'CompanyName'  => Str::limit($name,34),
-                'AddressLine1' => Str::limit(Arr::get($shipTo, 'address_line_1'),63),
-                'AddressLine2' => Str::limit($address2,63),
+                'CompanyName'  => Str::limit($name,30),
+                'AddressLine1' => Str::limit(Arr::get($shipTo, 'address_line_1'),60),
+                'AddressLine2' => Str::limit($address2,60),
                 'PostalCode'   => $postalCode,
-                'City'         => Str::limit(Arr::get($shipTo, 'locality'),31),
-                'County'       => Str::limit(Arr::get($shipTo, 'administrative_area'),31),
+                'City'         => Str::limit(Arr::get($shipTo, 'locality'),31,''),
+                'County'       => Str::limit(Arr::get($shipTo, 'administrative_area'),31,''),
                 'CountryCode'  => $country->code,
                 'Contact'      => [
-                    'PersonName'   => Str::limit(Arr::get($shipTo, 'contact'),63),
-                    'PhoneNumber'  => Str::limit(Arr::get($shipTo, 'phone'),15),
+                    'PersonName'   => Str::limit(Arr::get($shipTo, 'contact'),60),
+                    'PhoneNumber'  => Str::limit(Arr::get($shipTo, 'phone'),15,''),
                     'Email'        => Arr::get($shipTo, 'email'),
                 ],
-                'Instructions' => Str::limit(preg_replace("/[^A-Za-z0-9 \-]/", '', $request->get('note')),63),
+                'Instructions' => Str::limit(preg_replace("/[^A-Za-z0-9 \-]/", '', strip_tags($request->get('note'))),60),
 
 
             ],
@@ -193,7 +193,6 @@ class ApcGb extends Shipper_Provider {
                 'Items'          => ['Item' => $items]
             ]
         ];
-
 
         if ($request->get('service_type') != '') {
             $params['ProductCode'] = $request->get('service_type');
