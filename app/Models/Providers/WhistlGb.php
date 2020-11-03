@@ -167,7 +167,8 @@ class WhistlGb extends Shipper_Provider {
 
             ],
             'Reference1'          => $request->get('reference'),
-            'SpecialInstructions' => Str::limit($request->get('note'), 35),
+            'Reference2'          => $request->get('reference2'),
+            'SpecialInstructions' => Str::limit(strip_tags($request->get('note')), 35,''),
             'ContentsDescription' => 'Goods',
             'Packages'            => $parcels,
             'ServiceInfo'         => $serviceInfo

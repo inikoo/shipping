@@ -255,7 +255,7 @@ class DpdSk extends Shipper_Provider {
         return array(
             'reference'        => $reference,
             'delisId'          => $shipperAccount->credentials['delisId'],
-            'note'             => Str::limit($request->get('note'), 35),
+            'note'             => Str::limit(strip_tags($request->get('note')), 35,''),
             'product'          => $request->get('shipping_product', 1),
             'pickup'           => array(
                 'date'       => $pickup_date->format('Ymd'),
