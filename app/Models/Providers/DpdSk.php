@@ -242,7 +242,7 @@ class DpdSk extends Shipper_Provider {
         $streetDetail = preg_replace("/Ø/", 'ø', $streetDetail);
 
 
-        $streetDetail = Str::limit($streetDetail, 35);
+        $streetDetail = Str::limit($streetDetail, 35,'');
 
 
         $phone = trim(Arr::get($shipTo, 'phone'));
