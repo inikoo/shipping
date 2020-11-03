@@ -152,7 +152,7 @@ class WhistlGb extends Shipper_Provider {
                 'CollectionReadyTime' => $pickUp['ready'].':00',
             ],
             'DeliveryAddress'     => [
-                'ContactName' => Arr::get($shipTo, 'contact'),
+                'ContactName' => Arr::get($shipTo, 'contact','Anonymous'),
                 'CompanyName' => Arr::get($shipTo, 'organization'),
                 'Email'       => Arr::get($shipTo, 'email'),
                 'Phone'       => trim(Arr::get($shipTo, 'phone')),
