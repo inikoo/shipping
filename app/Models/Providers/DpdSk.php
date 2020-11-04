@@ -137,6 +137,7 @@ class DpdSk extends Shipper_Provider {
 
 
         foreach ($parcelsData as $key => $value) {
+            $value['weight']=round($value['weight'],1);
             if ($value['weight'] > 31.5) {
                 $parcelsData[$key]['weight'] = '31.5';
             } elseif ($value['weight'] < 0.1) {
