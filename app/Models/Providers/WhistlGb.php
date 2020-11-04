@@ -29,7 +29,7 @@ class WhistlGb extends Shipper_Provider {
 
     protected $table = 'whistl_gb_shipper_providers';
 
-    protected string $api_url = "https://api.test.parcelhub.net/1.0/";
+    protected string $api_url = "https://api.parcelhub.net/1.0/";
 
     protected $credentials_rules = [
         'username' => ['required',],
