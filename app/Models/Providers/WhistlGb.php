@@ -268,7 +268,7 @@ class WhistlGb extends Shipper_Provider {
     }
 
     private function getHeaders($shipperAccount) {
-        if (Arr::get($shipperAccount->data, 'accessToken') == '' or (gmdate('U') - Arr::get($shipperAccount->data, 'expiresAt', 0) >= 36000)) {
+        if (Arr::get($shipperAccount->data, 'accessToken') == '' or (Arr::get($shipperAccount->data, 'expiresAt', gmdate('U')) -gmdate('U') < 1800 )) {
             $this->login($shipperAccount);
         }
 
