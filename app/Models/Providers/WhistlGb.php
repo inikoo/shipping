@@ -103,7 +103,7 @@ class WhistlGb extends Shipper_Provider {
             $result['label_link']      = env('APP_URL').'/labels/'.$pdfChecksum;
 
             $error_shipments = json_decode($request->get('error_shipments', '[]'));
-            if (count($error_shipments) > 0) {
+            if (  is_array($error_shipments) and   count($error_shipments) > 0) {
                 (new Shipment)->wherein('id', $error_shipments)->update(['status' => 'fixed']);
             }
 
