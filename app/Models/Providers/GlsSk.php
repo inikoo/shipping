@@ -63,7 +63,7 @@ class GlsSk extends Shipper_Provider {
         }
 
 
-        $request = array("printLabelsRequest" => $printLabelsRequest);
+        $printLabelsRequest = array("printLabelsRequest" => $printLabelsRequest);
 
         $soapOptions = array(
             'soap_version'   => SOAP_1_1,
@@ -78,7 +78,7 @@ class GlsSk extends Shipper_Provider {
             return $result;
         }
 
-        $apiResponse = $client->PrintLabels($request)->PrintLabelsResult;
+        $apiResponse = $client->PrintLabels($printLabelsRequest)->PrintLabelsResult;
 
 
         if ($debug) {
