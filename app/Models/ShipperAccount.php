@@ -70,8 +70,6 @@ class ShipperAccount extends Model {
         $shipment = new Shipment(
             [
                 'reference'=>$request->get('reference'),
-                'reference_2'=>$request->get('reference_2'),
-                'reference_3'=>$request->get('reference_3'),
                 'data' => $shipmentData
 
             ]
@@ -88,6 +86,10 @@ class ShipperAccount extends Model {
 
     public function getServices($request) {
         return $this->shipper->provider->getServices($request, $this);
+    }
+
+    public function track($shipment) {
+        return $this->shipper->provider->track($shipment);
     }
 
 

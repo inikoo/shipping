@@ -24,7 +24,7 @@ use stdClass;
  *
  * @mixin \Illuminate\Database\Eloquent\Builder
  */
-class GlsSk extends Shipper_Provider {
+class GlsSk extends ShipperProvider {
 
     protected $table = 'gls_sk_shipper_providers';
 
@@ -101,7 +101,7 @@ class GlsSk extends Shipper_Provider {
 
             $msg=$apiResponse->PrintLabelsErrorList->ErrorInfo->ErrorDescription;
             $result['error_message'] = $msg;
-            $shipment->reference_3 = $msg;
+            $shipment->error_message = $msg;
 
 
         } elseif ($apiResponse->Labels != "") {
@@ -114,7 +114,7 @@ class GlsSk extends Shipper_Provider {
                     'data'     => base64_encode($pdfData)
                 ]
             );
-            $shipment->pdf_label()->save($pdfLabel);
+            $shipment->pdfLabel()->save($pdfLabel);
             $shipment->status = 'success';
 
             $result['tracking_number'] = $apiResponse->PrintLabelsInfoList->PrintLabelsInfo->ParcelNumber;

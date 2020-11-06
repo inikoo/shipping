@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 /**
- * Class Shipper_Provider
+ * Class ShipperProvider
  *
  * @property array               $credentials_rules
  * @property \App\Models\Shipper $shipper
@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\Validator;
  * @mixin \Illuminate\Database\Eloquent\Builder
  * @package App\Models\Providers
  */
-class Shipper_Provider extends Model {
+class ShipperProvider extends Model {
 
 
     protected string $api_url = '';
@@ -166,6 +166,10 @@ class Shipper_Provider extends Model {
     }
 
     function getServices($request, $shipperAccount) {
+        //
+    }
+
+    function track($shipment) {
         //
     }
 

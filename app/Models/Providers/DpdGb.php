@@ -22,7 +22,7 @@ use Illuminate\Support\Arr;
  *
  * @mixin \Illuminate\Database\Eloquent\Builder
  */
-class DpdGb extends Shipper_Provider {
+class DpdGb extends ShipperProvider {
 
     protected $table = 'dpd_gb_shipper_providers';
 

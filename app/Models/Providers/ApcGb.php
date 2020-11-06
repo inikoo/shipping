@@ -26,7 +26,7 @@ use Illuminate\Support\Str;
  * @property array  $credentials
  * @mixin \Illuminate\Database\Eloquent\Builder
  */
-class ApcGb extends Shipper_Provider {
+class ApcGb extends ShipperProvider {
 
 
     protected $table = 'apc_gb_shipper_providers';
@@ -138,7 +138,7 @@ class ApcGb extends Shipper_Provider {
         } catch (Exception $e) {
             //
         }
-        $shipment->reference_3 = $msg;
+        $shipment->error_message = $msg;
 
 
         $result['error_message'] = $msg;
@@ -322,6 +322,10 @@ class ApcGb extends Shipper_Provider {
         return base64_decode($apiResponse['data']['Orders']['Order']['Label']['Content']);
 
 
+    }
+
+    function track($shipment){
+        //
     }
 
 }

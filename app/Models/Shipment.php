@@ -18,9 +18,10 @@ use Illuminate\Database\Eloquent\Model;
  * @property integer $shipper_account_id
  * @property string  $status
  * @property string  $reference
- * @property string  $reference_2
- * @property string  $reference_3
+ * @property string  $tracking
+ * @property string  $error_message
  * @property array   $data
+ * @property ShipperAccount $shipperAccount
  *
  * @mixin \Illuminate\Database\Eloquent\Builder
  */
@@ -37,14 +38,18 @@ class Shipment extends Model {
     protected $guarded = [];
 
 
-    public function shipper_account() {
+    public function shipperAccount() {
         return $this->belongsTo('App\Models\ShipperAccount');
     }
 
 
-    public function pdf_label() {
+    public function pdfLabel() {
         return $this->hasOne('App\Models\PdfLabel');
     }
 
+    public function track() {
+        $this->shipperAccount->track($this);
+
+    }
 
 }

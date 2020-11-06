@@ -29,5 +29,6 @@ $router->group(
     $router->post('shipper-accounts', 'ShipperAccountController@create');
     $router->post('shipment', 'ShipmentController@create');
     $router->get('services', 'ShipmentController@services');
+    $router->get('track/{shipmentId}', 'ShipmentController@track');
 
 });

@@ -26,7 +26,7 @@ use Exception;
  *
  * @mixin \Illuminate\Database\Eloquent\Builder
  */
-class WhistlGb extends Shipper_Provider {
+class WhistlGb extends ShipperProvider {
 
     protected $table = 'whistl_gb_shipper_providers';
 
@@ -93,7 +93,7 @@ class WhistlGb extends Shipper_Provider {
                             'data'     => $pdfData
                         ]
                     );
-                    $shipment->pdf_label()->save($pdfLabel);
+                    $shipment->pdfLabel()->save($pdfLabel);
                 }
             }
 
@@ -118,7 +118,7 @@ class WhistlGb extends Shipper_Provider {
             } catch (Exception $e) {
                 //
             }
-            $shipment->reference_3   = $msg;
+            $shipment->error_message   = $msg;
             $result['error_message'] = $msg;
 
             $result['errors'] = [json_encode($response)];

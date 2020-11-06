@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\Validator;
  *
  * @mixin \Illuminate\Database\Eloquent\Builder
  */
-class Postmen extends Shipper_Provider {
+class Postmen extends ShipperProvider {
 
     protected $table = 'postmen_shipper_providers';
     protected array $headers = [];

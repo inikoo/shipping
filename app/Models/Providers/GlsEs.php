@@ -20,7 +20,7 @@ use Illuminate\Http\Request;
  *
  * @mixin \Illuminate\Database\Eloquent\Builder
  */
-class GlsEs extends Shipper_Provider {
+class GlsEs extends ShipperProvider {
 
     protected $table = 'gls_es_shipper_providers';
 

@@ -28,7 +28,7 @@ use Illuminate\Support\Str;
  * @property array  $credentials
  * @mixin \Illuminate\Database\Eloquent\Builder
  */
-class DpdSk extends Shipper_Provider {
+class DpdSk extends ShipperProvider {
 
 
     protected $table = 'dpd_sk_shipper_providers';
@@ -153,7 +153,7 @@ class DpdSk extends Shipper_Provider {
         $result['error_message'] = $error_msg;
         $result['status']        = 599;
 
-        $shipment->reference_3 = $error_msg;
+        $shipment->error_message = $error_msg;
 
         $shipment->save();
 

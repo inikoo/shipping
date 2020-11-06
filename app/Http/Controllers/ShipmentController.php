@@ -8,6 +8,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PdfLabel;
+use App\Models\Shipment;
 use App\Models\ShipperAccount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -212,6 +213,16 @@ class ShipmentController extends Controller {
         }
 
         return false;
+
+    }
+
+    function track($shipmentId){
+
+        $shipment = (new Shipment())->find($shipmentId);
+        if($shipment->id){
+            $shipment->track();
+        }
+
 
     }
 
