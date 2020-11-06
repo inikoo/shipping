@@ -27,7 +27,7 @@ class ShipmentController extends Controller {
     function create(Request $request) {
 
 
-        if($errors=$this->validateShipmentRequest($request)){
+        if ($errors = $this->validateShipmentRequest($request)) {
             return response()->json(['errors' => $errors], 422);
         }
 
@@ -48,7 +48,14 @@ class ShipmentController extends Controller {
                 throw new Exception(json_encode($errors));
 
             } else {
-                return response()->json(['errors' => $errors], $status);
+                return response()->json(
+                    [
+                        'status'      => 'fail',
+                        'shipment_id' => Arr::get($response, 'shipment_id'),
+                        'msg'         => Arr::get($response, 'error_message', 'Unknown error'),
+                        'errors'      => $errors
+                    ], $status
+                );
 
             }
 
@@ -56,6 +63,7 @@ class ShipmentController extends Controller {
 
         return response()->json(
             [
+                'status'          => 'success',
                 'label_link'      => Arr::get($response, 'label_link'),
                 'tracking_number' => Arr::get($response, 'tracking_number'),
                 'shipment_id'     => Arr::get($response, 'shipment_id')
@@ -67,24 +75,26 @@ class ShipmentController extends Controller {
 
     function display_label($checksum) {
         $pdfLabel = (new PdfLabel())->where('checksum', $checksum)->first();
+
         return response(base64_decode($pdfLabel->data), 200)->header('Content-Type', 'application/pdf');
 
     }
 
-    function display_async_label($shipperAccountID , $labelId) {
+    function display_async_label($shipperAccountID, $labelId) {
 
         /**
          * @var $shipper_account \App\Models\ShipperAccount
          */
         $shipper_account = (new ShipperAccount)->find($shipperAccountID);
+
         return response($shipper_account->getLabel($labelId), 200)->header('Content-Type', 'application/pdf');
 
 
     }
 
-    function services(Request $request){
+    function services(Request $request) {
 
-        if($errors=$this->validateShipmentRequest($request)){
+        if ($errors = $this->validateShipmentRequest($request)) {
             return response()->json(['errors' => $errors], 422);
         }
 
@@ -97,7 +107,7 @@ class ShipmentController extends Controller {
 
         return response()->json(
             [
-                'services'      => Arr::get($response, 'services',[]),
+                'services' => Arr::get($response, 'services', []),
 
             ], Arr::get($response, 'status', 200)
         );
@@ -105,7 +115,7 @@ class ShipmentController extends Controller {
     }
 
 
-    private function validateShipmentRequest(Request $request){
+    private function validateShipmentRequest(Request $request) {
 
 
         $validator = Validator::make(
@@ -140,7 +150,7 @@ class ShipmentController extends Controller {
 
 
         if ($validator->fails()) {
-            return  $validator->errors();
+            return $validator->errors();
         }
 
 
@@ -203,7 +213,7 @@ class ShipmentController extends Controller {
 
 
         if ($validator->fails()) {
-            return  $validator->errors();
+            return $validator->errors();
         }
 
         return false;

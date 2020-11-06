@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Spatie\ArrayToXml\ArrayToXml;
+use Exception;
 
 
 /**
@@ -71,7 +72,9 @@ class WhistlGb extends Shipper_Provider {
             $shipment->data = $shipmentData;
             $shipment->save();
         }
-        $result = [];
+        $result = [
+            'shipment_id' => $shipment->id
+        ];
 
         if ($apiResponse['status'] == 200) {
 
@@ -95,14 +98,32 @@ class WhistlGb extends Shipper_Provider {
             }
 
 
-            $result['tracking_number'] = Arr::get($apiResponse, 'data.ParcelhubShipmentId');
-            $result['shipment_id']     = Arr::get($apiResponse, 'data.ShippingInfo.CourierTrackingNumber');
+            $result['tracking_number'] = Arr::get($apiResponse, 'data.ShippingInfo.CourierTrackingNumber');
+            //$result['tracking_number'] = Arr::get($apiResponse, 'data.ShippingInfo.CourierTrackingNumber');
             $result['label_link']      = env('APP_URL').'/labels/'.$pdfChecksum;
+
+            $error_shipments = json_decode($request->get('error_shipments', '[]'));
+            if (count($error_shipments) > 0) {
+                (new Shipment)->wherein('id', $error_shipments)->update(['status' => 'fixed']);
+            }
 
 
         } else {
             $shipment->status = 'error';
-            $result['errors'] = [json_encode($response)];
+
+
+
+            $msg = 'Unknown error';
+            try {
+                $msg = $response['Message'];
+            } catch (Exception $e) {
+                //
+            }
+            $shipment->reference_3 = $msg;
+            $result['error_message'] = $msg;
+
+            $result['errors']      = [json_encode($response)];
+            $result['status']      = 599;
         }
 
 
@@ -124,9 +145,9 @@ class WhistlGb extends Shipper_Provider {
             $parcels[] = [
                 'Package' => [
                     'Dimensions' => [
-                        'Length' => max(floor(Arr::get($parcel, 'depth')),1),
-                        'Width'  => max(floor(Arr::get($parcel, 'width')),1),
-                        'Height' => max(floor(Arr::get($parcel, 'height')),1),
+                        'Length' => max(floor(Arr::get($parcel, 'depth')), 1),
+                        'Width'  => max(floor(Arr::get($parcel, 'width')), 1),
+                        'Height' => max(floor(Arr::get($parcel, 'height')), 1),
                     ],
                     'Weight'     => Arr::get($parcel, 'weight'),
                     'Contents'   => 'Goods'
@@ -140,9 +161,7 @@ class WhistlGb extends Shipper_Provider {
         }
 
 
-
-        $serviceInfo=json_decode($request->get('service_type'),true);
-
+        $serviceInfo = json_decode($request->get('service_type'), true);
 
 
         return [
@@ -152,7 +171,7 @@ class WhistlGb extends Shipper_Provider {
                 'CollectionReadyTime' => $pickUp['ready'].':00',
             ],
             'DeliveryAddress'     => [
-                'ContactName' => Arr::get($shipTo, 'contact','Anonymous'),
+                'ContactName' => Arr::get($shipTo, 'contact', 'Anonymous'),
                 'CompanyName' => Arr::get($shipTo, 'organization'),
                 'Email'       => Arr::get($shipTo, 'email'),
                 'Phone'       => trim(Arr::get($shipTo, 'phone')),
@@ -168,7 +187,7 @@ class WhistlGb extends Shipper_Provider {
             ],
             'Reference1'          => $request->get('reference'),
             'Reference2'          => $request->get('reference2'),
-            'SpecialInstructions' => Str::limit(strip_tags($request->get('note')), 35,''),
+            'SpecialInstructions' => Str::limit(strip_tags($request->get('note')), 35, ''),
             'ContentsDescription' => 'Goods',
             'Packages'            => $parcels,
             'ServiceInfo'         => $serviceInfo
@@ -237,7 +256,7 @@ class WhistlGb extends Shipper_Provider {
 
 
         $apiResponse = $this->callApi(
-            $this->api_url.'Service/?AccountId='.Arr::get($shipperAccount->credentials, 'account'), $this->getHeaders($shipperAccount), '{}', 'GET','xml'
+            $this->api_url.'Service/?AccountId='.Arr::get($shipperAccount->credentials, 'account'), $this->getHeaders($shipperAccount), '{}', 'GET', 'xml'
         );
 
         $services = [];
@@ -268,7 +287,7 @@ class WhistlGb extends Shipper_Provider {
     }
 
     private function getHeaders($shipperAccount) {
-        if (Arr::get($shipperAccount->data, 'accessToken') == '' or (Arr::get($shipperAccount->data, 'expiresAt', gmdate('U')) -gmdate('U') < 1800 )) {
+        if (Arr::get($shipperAccount->data, 'accessToken') == '' or (Arr::get($shipperAccount->data, 'expiresAt', gmdate('U')) - gmdate('U') < 1800)) {
             $this->login($shipperAccount);
         }
 

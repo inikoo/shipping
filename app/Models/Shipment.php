@@ -17,6 +17,9 @@ use Illuminate\Database\Eloquent\Model;
  * @property integer $id
  * @property integer $shipper_account_id
  * @property string  $status
+ * @property string  $reference
+ * @property string  $reference_2
+ * @property string  $reference_3
  * @property array   $data
  *
  * @mixin \Illuminate\Database\Eloquent\Builder

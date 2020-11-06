@@ -50,7 +50,7 @@ class DpdSk extends Shipper_Provider {
 
     public function createLabel(Shipment $shipment, Request $request, ShipperAccount $shipperAccount) {
 
-        $debug=Arr::get($shipperAccount->data, 'debug') == 'Yes';
+        $debug = Arr::get($shipperAccount->data, 'debug') == 'Yes';
 
         $params = array(
             'jsonrpc' => '2.0',
@@ -68,9 +68,9 @@ class DpdSk extends Shipper_Provider {
         );
 
         if ($debug) {
-            $shipmentData=$shipment->data;
-            data_fill($shipmentData,'debug.request',$params['params']['shipment']);
-            $shipment->data=$shipmentData;
+            $shipmentData = $shipment->data;
+            data_fill($shipmentData, 'debug.request', $params['params']['shipment']);
+            $shipment->data = $shipmentData;
             $shipment->save();
         }
 
@@ -80,31 +80,38 @@ class DpdSk extends Shipper_Provider {
         );
 
         if ($debug) {
-            $shipmentData=$shipment->data;
-            data_fill($shipmentData,'debug.response', Arr::get($apiResponse,'data','No Data'));
-            $shipment->data=$shipmentData;
+            $shipmentData = $shipment->data;
+            data_fill($shipmentData, 'debug.response', Arr::get($apiResponse, 'data', 'No Data'));
+            $shipment->data = $shipmentData;
             $shipment->save();
         }
 
-        $shipment->status   = 'error';
+        $shipment->status = 'error';
 
-        $result = [];
+        $result = [
+            'shipment_id' => $shipment->id
+        ];
+
+        $error_msg = '';
+
         if (!empty($apiResponse['data']['error'])) {
 
             if ($apiResponse['data']['error']['code'] == 103) {
                 $result['errors'][] = ['authentication' => $apiResponse['data']['error']['message']];
-                $result['status']   = 401;
+                $result['status']   = 599;
+                $error_msg          = 'Invalid credentials';
+
             } elseif ($apiResponse['data']['error']['code'] == 401 or $apiResponse['data']['error']['code'] == 519) {
 
-                $msg = $apiResponse['data']['error']['message'];
+                $error_msg = $apiResponse['data']['error']['message'];
 
 
                 if (isset($apiResponse['data']['error']['data']['additional_details'])) {
-                    $msg .= ' '.$apiResponse['data']['error']['data']['additional_details'];
+                    $error_msg .= ' '.$apiResponse['data']['error']['data']['additional_details'];
                 }
 
-                $result['errors'][] = ['invalid' => $msg];
-                $result['status']   = 422;
+                $result['errors'][] = ['invalid' => $error_msg];
+
             }
 
 
@@ -112,20 +119,37 @@ class DpdSk extends Shipper_Provider {
 
             $res = array_pop($apiResponse['data']['result'])[0];
             if (!$res['success']) {
-                $result['status'] = 422;
+                $msg = '';
                 foreach ($res['messages'] as $error) {
 
-                    $result['errors'][] = [$res['ackCode'] => $error['value'].' ('.$error['envelope'].($error['element'] != '' ? '.'.$error['element'] : '').')'];
 
+                    $result['errors'][] = [$res['ackCode'] => $error['value'].' ('.$error['envelope'].($error['element'] != '' ? '.'.$error['element'] : '').')'];
+                    $msg                .= $error['value'].' ('.($error['element'] != '' ? '.'.$error['element'] : '').'), ';
                 }
+                $error_msg = preg_replace('/, $/', '', $msg);
             } else {
                 $shipment->status          = 'success';
                 $result['tracking_number'] = substr($res['mpsid'], 0, -8);
                 $result['label_link']      = $res['label'];
                 $result['shipment_id']     = $shipment->id;
 
+                $shipment->save();
+
+                return $result;
+
             }
         }
+
+        if ($error_msg == '') {
+            $error_msg = 'Unknown error';
+
+        }
+
+        $result['error_message'] = $error_msg;
+        $result['status']        = 599;
+
+        $shipment->reference_3 = $error_msg;
+
         $shipment->save();
 
         return $result;
@@ -137,7 +161,7 @@ class DpdSk extends Shipper_Provider {
 
 
         foreach ($parcelsData as $key => $value) {
-            $value['weight']=round($value['weight'],1);
+            $value['weight'] = round($value['weight'], 1);
             if ($value['weight'] > 31.5) {
                 $parcelsData[$key]['weight'] = '31.5';
             } elseif ($value['weight'] < 0.1) {
@@ -211,9 +235,10 @@ class DpdSk extends Shipper_Provider {
 
         if (!in_array(
             $country->code, [
-            'GB',
-            'NL','IE'
-        ]
+                              'GB',
+                              'NL',
+                              'IE'
+                          ]
         )) {
             $postcode = preg_replace("/[^0-9]/", '', $postcode);
         }
@@ -243,7 +268,7 @@ class DpdSk extends Shipper_Provider {
         $streetDetail = preg_replace("/Ø/", 'ø', $streetDetail);
 
 
-        $streetDetail = Str::limit($streetDetail, 35,'');
+        $streetDetail = Str::limit($streetDetail, 35, '');
 
 
         $phone = trim(Arr::get($shipTo, 'phone'));
@@ -256,7 +281,7 @@ class DpdSk extends Shipper_Provider {
         return array(
             'reference'        => $reference,
             'delisId'          => $shipperAccount->credentials['delisId'],
-            'note'             => Str::limit(strip_tags($request->get('note')), 35,''),
+            'note'             => Str::limit(strip_tags($request->get('note')), 35, ''),
             'product'          => $request->get('shipping_product', 1),
             'pickup'           => array(
                 'date'       => $pickup_date->format('Ymd'),
@@ -267,7 +292,7 @@ class DpdSk extends Shipper_Provider {
             ),
             'addressRecipient' => array(
                 'type'         => $type,
-                'name'         => $name,
+                'name'         => Str::limit($name,47),
                 'nameDetail'   => $nameDetail,
                 'street'       => $street,
                 'streetDetail' => $streetDetail,
@@ -304,9 +329,9 @@ class DpdSk extends Shipper_Provider {
             foreach ($holidays as $day) {
                 if ($day == $formatted_date and in_array(
                         $day->getType(), [
-                        'bank',
-                        'official'
-                    ]
+                                           'bank',
+                                           'official'
+                                       ]
                     )) {
                     return true;
                 }
@@ -320,7 +345,6 @@ class DpdSk extends Shipper_Provider {
 
 
     }
-
 
 
 }

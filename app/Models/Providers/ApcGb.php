@@ -50,7 +50,7 @@ class ApcGb extends Shipper_Provider {
 
     public function createLabel(Shipment $shipment, Request $request, ShipperAccount $shipperAccount) {
 
-        $debug=Arr::get($shipperAccount->data, 'debug') == 'Yes';
+        $debug = Arr::get($shipperAccount->data, 'debug') == 'Yes';
 
         $headers = [
             "remote-user: Basic ".base64_encode($shipperAccount->credentials['email'].':'.$shipperAccount->credentials['password']),
@@ -58,19 +58,18 @@ class ApcGb extends Shipper_Provider {
         ];
 
 
-        $params            = array(
+        $params = array(
             'Orders' => [
                 'Order' => $this->getShipmentParameters($request, $shipperAccount)
             ]
         );
 
         if ($debug) {
-            $shipmentData=$shipment->data;
-            data_fill($shipmentData,'debug.request',$params);
-            $shipment->data=$shipmentData;
+            $shipmentData = $shipment->data;
+            data_fill($shipmentData, 'debug.request', $params);
+            $shipment->data = $shipmentData;
             $shipment->save();
         }
-
 
 
         $apiResponse = $this->callApi(
@@ -79,16 +78,18 @@ class ApcGb extends Shipper_Provider {
 
 
         if ($debug) {
-            $shipmentData=$shipment->data;
-            data_fill($shipmentData,'debug.response', $apiResponse['data']);
-            $shipment->data=$shipmentData;
+            $shipmentData = $shipment->data;
+            data_fill($shipmentData, 'debug.response', $apiResponse['data']);
+            $shipment->data = $shipmentData;
         }
 
 
-        $shipment->status   = 'error';
+        $shipment->status = 'error';
 
 
-        $result = [];
+        $result = [
+            'shipment_id' => $shipment->id
+        ];
 
 
         if ($apiResponse['status'] == 200) {
@@ -101,14 +102,50 @@ class ApcGb extends Shipper_Provider {
 
                 $result['tracking_number'] = $data['WayBill'];
                 $result['label_link']      = env('APP_URL').'/async_labels/'.$shipperAccount->id.'/'.$data['OrderNumber'];
-                $result['shipment_id']     = $shipment->id;
                 $shipment->save();
+
+                $error_shipments = json_decode($request->get('error_shipments', '[]'));
+                if (count($error_shipments) > 0) {
+                    (new Shipment)->wherein('id', $error_shipments)->update(['status' => 'fixed']);
+                }
+
                 return $result;
             }
 
 
         }
-        $result['errors'] = [json_encode($apiResponse['data'])];
+
+
+        $msg = 'Unknown error';
+        try {
+            $messages = $apiResponse['data']['Orders']['Order']['Messages'];
+
+
+            $msg = Arr::get($messages, 'Description', 'Unknown error');
+
+            if (isset($messages['ErrorFields'])) {
+                $msg = '';
+                foreach ($messages['ErrorFields'] as $error) {
+                    if ($error['FieldName'] == 'Delivery PostalCode') {
+                        $msg .= 'Invalid postcode, ';
+                    } else {
+                        $msg .= $error['FieldName'].' '.$error['ErrorMessage'].', ';
+                    }
+                }
+                $msg = preg_replace('/, $/', '', $msg);
+            }
+
+        } catch (Exception $e) {
+            //
+        }
+        $shipment->reference_3 = $msg;
+
+
+        $result['error_message'] = $msg;
+        $result['errors']        = [json_encode($apiResponse['data'])];
+        $result['status']        = 599;
+
+
         $shipment->save();
 
 
@@ -170,21 +207,21 @@ class ApcGb extends Shipper_Provider {
             'CollectionDate'  => $pickup_date->format('d/m/Y'),
             'ReadyAt'         => Arr::get($pickUp, 'ready', '16:30'),
             'ClosedAt'        => Arr::get($pickUp, 'end', '17:00'),
-            'Reference'       => Str::limit($request->get('reference'),30),
+            'Reference'       => Str::limit($request->get('reference'), 30),
             'Delivery'        => [
-                'CompanyName'  => Str::limit($name,30),
-                'AddressLine1' => Str::limit(Arr::get($shipTo, 'address_line_1'),60),
-                'AddressLine2' => Str::limit($address2,60),
+                'CompanyName'  => Str::limit($name, 30),
+                'AddressLine1' => Str::limit(Arr::get($shipTo, 'address_line_1'), 60),
+                'AddressLine2' => Str::limit($address2, 60),
                 'PostalCode'   => $postalCode,
-                'City'         => Str::limit(Arr::get($shipTo, 'locality'),31,''),
-                'County'       => Str::limit(Arr::get($shipTo, 'administrative_area'),31,''),
+                'City'         => Str::limit(Arr::get($shipTo, 'locality'), 31, ''),
+                'County'       => Str::limit(Arr::get($shipTo, 'administrative_area'), 31, ''),
                 'CountryCode'  => $country->code,
                 'Contact'      => [
-                    'PersonName'   => Str::limit(Arr::get($shipTo, 'contact'),60),
-                    'PhoneNumber'  => Str::limit(Arr::get($shipTo, 'phone'),15,''),
-                    'Email'        => Arr::get($shipTo, 'email'),
+                    'PersonName'  => Str::limit(Arr::get($shipTo, 'contact'), 60),
+                    'PhoneNumber' => Str::limit(Arr::get($shipTo, 'phone'), 15, ''),
+                    'Email'       => Arr::get($shipTo, 'email'),
                 ],
-                'Instructions' => Str::limit(preg_replace("/[^A-Za-z0-9 \-]/", '', strip_tags($request->get('note'))),60),
+                'Instructions' => Str::limit(preg_replace("/[^A-Za-z0-9 \-]/", '', strip_tags($request->get('note'))), 60),
 
 
             ],
@@ -260,12 +297,11 @@ class ApcGb extends Shipper_Provider {
         }
 
         //AB51 8US. now allow TDAY code,
-        if(!preg_match('/^BT51/',$postalCode)){
+        if (!preg_match('/^BT51/', $postalCode)) {
             if (preg_match('/^((JE|GG|IM|KW|HS|ZE|IV)\d+)|AB(30|33|34|35|36|37|38)|AB[4-5][0-9]|DD[89]|FK(16|17|18|19|20|21)|PA[2-8][0-9]|PH((15|16|17|18|19)|[2-5][0-9])|KA(27|28)/', $postalCode)) {
                 $params['ProductCode'] = 'TDAY';
             }
         }
-
 
 
         return $params;

@@ -88,9 +88,22 @@ class GlsSk extends Shipper_Provider {
         }
         $shipment->status   = 'error';
 
-        $result = [];
+
+        $result = [
+            'shipment_id' => $shipment->id
+        ];
+
         if (count((array)$apiResponse->PrintLabelsErrorList)) {
+
             $result['errors'] = [$apiResponse->PrintLabelsErrorList];
+            $result['status']        = 599;
+
+
+            $msg=$apiResponse->PrintLabelsErrorList->ErrorInfo->ErrorDescription;
+            $result['error_message'] = $msg;
+            $shipment->reference_3 = $msg;
+
+
         } elseif ($apiResponse->Labels != "") {
 
             $pdfData     = $apiResponse->Labels;
@@ -109,6 +122,7 @@ class GlsSk extends Shipper_Provider {
             $result['label_link']      = env('APP_URL').'/labels/'.$pdfChecksum;
 
         }
+
         $shipment->save();
 
 
