@@ -100,10 +100,10 @@ class WhistlGb extends Shipper_Provider {
 
             $result['tracking_number'] = Arr::get($apiResponse, 'data.ShippingInfo.CourierTrackingNumber');
             //$result['tracking_number'] = Arr::get($apiResponse, 'data.ShippingInfo.CourierTrackingNumber');
-            $result['label_link']      = env('APP_URL').'/labels/'.$pdfChecksum;
+            $result['label_link'] = env('APP_URL').'/labels/'.$pdfChecksum;
 
             $error_shipments = json_decode($request->get('error_shipments', '[]'));
-            if (  is_array($error_shipments) and   count($error_shipments) > 0) {
+            if (is_array($error_shipments) and count($error_shipments) > 0) {
                 (new Shipment)->wherein('id', $error_shipments)->update(['status' => 'fixed']);
             }
 
@@ -112,18 +112,17 @@ class WhistlGb extends Shipper_Provider {
             $shipment->status = 'error';
 
 
-
             $msg = 'Unknown error';
             try {
                 $msg = $response['Message'];
             } catch (Exception $e) {
                 //
             }
-            $shipment->reference_3 = $msg;
+            $shipment->reference_3   = $msg;
             $result['error_message'] = $msg;
 
-            $result['errors']      = [json_encode($response)];
-            $result['status']      = 599;
+            $result['errors'] = [json_encode($response)];
+            $result['status'] = 599;
         }
 
 
@@ -138,7 +137,6 @@ class WhistlGb extends Shipper_Provider {
 
 
         $parcels = [];
-        $weight  = 0;
         foreach ($parcelsData as $parcel) {
 
 
@@ -149,17 +147,11 @@ class WhistlGb extends Shipper_Provider {
                         'Width'  => max(floor(Arr::get($parcel, 'width')), 1),
                         'Height' => max(floor(Arr::get($parcel, 'height')), 1),
                     ],
-                    'Weight'     => Arr::get($parcel, 'weight'),
+                    'Weight'     => max(Arr::get($parcel, 'weight'), 0.001),
                     'Contents'   => 'Goods'
                 ]
             ];
-
-            if ($weight < Arr::get($parcel, 'weight')) {
-                $weight = Arr::get($parcel, 'weight');
-            }
-
         }
-
 
         $serviceInfo = json_decode($request->get('service_type'), true);
 
