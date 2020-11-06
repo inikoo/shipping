@@ -7,16 +7,17 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Providers\DpdGb;
+use App\Models\Shipment;
 use Illuminate\Console\Command;
+use Illuminate\Support\Arr;
 
-class PingDpdGb extends Command {
+class RefurbishTracking extends Command {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'ping:dpd_gb';
+    protected $signature = 'refurbish:tracking';
 
     /**
      * The console command description.
@@ -41,11 +42,21 @@ class PingDpdGb extends Command {
      */
     public function handle() {
 
+        $shipments = Shipment::all();
 
-        $provider= (new DpdGb)->where('slug', 'v3')->first();
-        foreach($provider->shipper->shipperAccounts as $shipperAccount){
-            $provider->login($shipperAccount);
-        }
+        $shipments->each(
+            function ($shipment) {
+                $tracking = null;
+                switch ($shipment->shipperAccount->label) {
+                    case 'APC':
+                        $tracking = Arr::get($shipment->data, 'debug.response.Orders.Order.WayBill', null);
+                        break;
+                }
+                $shipment->tracking = $tracking;
+                $shipment->save();
+            }
+
+        );
 
 
         return 0;
