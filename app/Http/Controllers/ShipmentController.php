@@ -9,7 +9,6 @@ namespace App\Http\Controllers;
 
 use App\Models\PdfLabel;
 use App\Models\ShipperAccount;
-use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Validator;
@@ -44,20 +43,16 @@ class ShipmentController extends Controller {
         $errors = Arr::get($response, 'errors', []);
 
         if (count($errors) > 0) {
-            if (env('SENTRY_URL')) {
-                throw new Exception(json_encode($errors));
 
-            } else {
-                return response()->json(
-                    [
-                        'status'      => 'fail',
-                        'shipment_id' => Arr::get($response, 'shipment_id'),
-                        'msg'         => Arr::get($response, 'error_message', 'Unknown error'),
-                        'errors'      => $errors
-                    ], $status
-                );
+            return response()->json(
+                [
+                    'status'      => 'fail',
+                    'shipment_id' => Arr::get($response, 'shipment_id'),
+                    'msg'         => Arr::get($response, 'error_message', 'Unknown error'),
+                    'errors'      => $errors
+                ], $status
+            );
 
-            }
 
         }
 
