@@ -135,6 +135,11 @@ class DpdSk extends Shipper_Provider {
 
                 $shipment->save();
 
+                $error_shipments = json_decode($request->get('error_shipments', '[]'));
+                if (  is_array($error_shipments) and   count($error_shipments) > 0) {
+                    (new Shipment)->wherein('id', $error_shipments)->update(['status' => 'fixed']);
+                }
+
                 return $result;
 
             }
