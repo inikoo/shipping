@@ -40,6 +40,9 @@ class DpdGb extends ShipperProvider {
 
 
         $params = $this->getShipmentParameters($request, $shipperAccount);
+
+        $shipment->boxes=Arr::get($params,'consignment.numberOfParcels',null);
+
         if ($debug) {
             $shipmentData = $shipment->data;
             data_fill($shipmentData, 'debug.request', $params);

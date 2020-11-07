@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string  $tracking
  * @property string  $error_message
  * @property array   $data
+ * @property integer   $boxes
  * @property ShipperAccount $shipperAccount
  *
  * @mixin \Illuminate\Database\Eloquent\Builder

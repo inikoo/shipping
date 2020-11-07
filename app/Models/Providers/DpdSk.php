@@ -52,6 +52,9 @@ class DpdSk extends ShipperProvider {
 
         $debug = Arr::get($shipperAccount->data, 'debug') == 'Yes';
 
+
+        $shipmentParams = $this->getShipmentParameters($request, $shipperAccount);
+
         $params = array(
             'jsonrpc' => '2.0',
             'method'  => 'create',
@@ -62,17 +65,19 @@ class DpdSk extends ShipperProvider {
                         'Email'     => $shipperAccount->credentials['username'],
                     ),
                 ),
-                'shipment'    => [$this->getShipmentParameters($request, $shipperAccount)],
+                'shipment'    => [$shipmentParams],
             ),
             'id'      => 'null',
         );
 
+
+        $shipment->boxes = count(Arr::get($shipmentParams, 'parcels.parcel', []));
         if ($debug) {
             $shipmentData = $shipment->data;
             data_fill($shipmentData, 'debug.request', $params['params']['shipment']);
             $shipment->data = $shipmentData;
-            $shipment->save();
         }
+        $shipment->save();
 
 
         $apiResponse = $this->callApi(
@@ -128,15 +133,19 @@ class DpdSk extends ShipperProvider {
                 }
                 $error_msg = preg_replace('/, $/', '', $msg);
             } else {
-                $shipment->status          = 'success';
-                $result['tracking_number'] = substr($res['mpsid'], 0, -8);
+
+                $tracking_number = substr($res['mpsid'], 0, -8);
+
+                $result['tracking_number'] = $tracking_number;
                 $result['label_link']      = $res['label'];
                 $result['shipment_id']     = $shipment->id;
 
+                $shipment->status   = 'success';
+                $shipment->tracking = $tracking_number;
                 $shipment->save();
 
                 $error_shipments = json_decode($request->get('error_shipments', '[]'));
-                if (  is_array($error_shipments) and   count($error_shipments) > 0) {
+                if (is_array($error_shipments) and count($error_shipments) > 0) {
                     (new Shipment)->wherein('id', $error_shipments)->update(['status' => 'fixed']);
                 }
 
@@ -297,7 +306,7 @@ class DpdSk extends ShipperProvider {
             ),
             'addressRecipient' => array(
                 'type'         => $type,
-                'name'         => Str::limit($name,47),
+                'name'         => Str::limit($name, 47),
                 'nameDetail'   => $nameDetail,
                 'street'       => $street,
                 'streetDetail' => $streetDetail,

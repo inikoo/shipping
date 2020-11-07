@@ -59,13 +59,14 @@ class ApcGb extends ShipperProvider {
             ]
         );
 
+        $shipment->boxes=Arr::get($params,'Orders.Order.ShipmentDetails.NumberOfPieces',null);
+
         if ($debug) {
             $shipmentData = $shipment->data;
             data_fill($shipmentData, 'debug.request', $params);
             $shipment->data = $shipmentData;
-            $shipment->save();
         }
-
+        $shipment->save();
 
         $apiResponse = $this->callApi(
             $this->api_url.'Orders.json', $this->getHeaders($shipperAccount), json_encode($params)

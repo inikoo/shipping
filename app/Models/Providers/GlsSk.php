@@ -43,25 +43,26 @@ class GlsSk extends ShipperProvider {
 
     ];
 
-    public function createLabel(Shipment $shipment,Request $request, ShipperAccount $shipperAccount) {
+    public function createLabel(Shipment $shipment, Request $request, ShipperAccount $shipperAccount) {
 
-        $debug=Arr::get($shipperAccount->data, 'debug') == 'Yes';
+        $debug = Arr::get($shipperAccount->data, 'debug') == 'Yes';
+
+        $shipmentParams = $this->getShipmentParameters($request, $shipperAccount);
 
         $printLabelsRequest = array(
             'Username'   => $shipperAccount->credentials['username'],
             'Password'   => hex2bin($shipperAccount->credentials['password']),
-            'ParcelList' => $this->getShipmentParameters($request, $shipperAccount)
+            'ParcelList' => $shipmentParams
         );
 
-
+        $shipment->boxes = $shipmentParams[0]->Count;
 
         if ($debug) {
-            $shipmentData=$shipment->data;
-            data_fill($shipmentData,'debug.request',json_decode(json_encode($printLabelsRequest['ParcelList']), true));
-            $shipment->data=$shipmentData;
-            $shipment->save();
+            $shipmentData = $shipment->data;
+            data_fill($shipmentData, 'debug.request', json_decode(json_encode($printLabelsRequest['ParcelList']), true));
+            $shipment->data = $shipmentData;
         }
-
+        $shipment->save();
 
         $printLabelsRequest = array("printLabelsRequest" => $printLabelsRequest);
 
@@ -75,6 +76,7 @@ class GlsSk extends ShipperProvider {
             $client = new SoapClient($this->api_url, $soapOptions);
         } catch (SoapFault $e) {
             $result['errors'] = ['Soap API connection error'];
+
             return $result;
         }
 
@@ -82,11 +84,11 @@ class GlsSk extends ShipperProvider {
 
 
         if ($debug) {
-            $shipmentData=$shipment->data;
-            data_fill($shipmentData,'debug.response', json_decode(json_encode($apiResponse), true));
-            $shipment->data=$shipmentData;
+            $shipmentData = $shipment->data;
+            data_fill($shipmentData, 'debug.response', json_decode(json_encode($apiResponse), true));
+            $shipment->data = $shipmentData;
         }
-        $shipment->status   = 'error';
+        $shipment->status = 'error';
 
 
         $result = [
@@ -96,10 +98,10 @@ class GlsSk extends ShipperProvider {
         if (count((array)$apiResponse->PrintLabelsErrorList)) {
 
             $result['errors'] = [$apiResponse->PrintLabelsErrorList];
-            $result['status']        = 599;
+            $result['status'] = 599;
 
 
-            $msg=$apiResponse->PrintLabelsErrorList->ErrorInfo->ErrorDescription;
+            $msg                     = $apiResponse->PrintLabelsErrorList->ErrorInfo->ErrorDescription;
             $result['error_message'] = $msg;
             $shipment->error_message = $msg;
 
@@ -115,14 +117,18 @@ class GlsSk extends ShipperProvider {
                 ]
             );
             $shipment->pdfLabel()->save($pdfLabel);
-            $shipment->status = 'success';
 
-            $result['tracking_number'] = $apiResponse->PrintLabelsInfoList->PrintLabelsInfo->ParcelNumber;
+            $tracking_number = $apiResponse->PrintLabelsInfoList->PrintLabelsInfo->ParcelNumber;
+
+            $shipment->status    = 'success';
+            $shipment->tracking = $tracking_number;
+
+            $result['tracking_number'] = $tracking_number;
             $result['shipment_id']     = $shipment->id;
             $result['label_link']      = env('APP_URL').'/labels/'.$pdfChecksum;
 
             $error_shipments = json_decode($request->get('error_shipments', '[]'));
-            if (  is_array($error_shipments) and   count($error_shipments) > 0) {
+            if (is_array($error_shipments) and count($error_shipments) > 0) {
                 (new Shipment)->wherein('id', $error_shipments)->update(['status' => 'fixed']);
             }
 

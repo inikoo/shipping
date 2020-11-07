@@ -51,7 +51,7 @@ class UpgradingShipment extends Command {
 
                 $shipment->boxes= count(Arr::get($shipment->data, 'debug.request.Packages', []));
 
-                if($shipment->boxes==0){
+                if(!$shipment->boxes){
 
                     $tmp=Arr::get($shipment->data, 'debug.original_request.parcels', false);
                     if($tmp){
@@ -61,13 +61,13 @@ class UpgradingShipment extends Command {
                 }
 
                 if($shipment->data==[]){
-                    $shipment->boxes=1;
+                    $shipment->boxes=null;
                 }
 
                 if($shipment->boxes==0){
-
-                    dd($shipment->data);
+                    $shipment->boxes=null;
                 }
+
 
 
                 $tracking = null;

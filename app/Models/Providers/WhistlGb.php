@@ -44,12 +44,18 @@ class WhistlGb extends ShipperProvider {
 
         $params = $this->getShipmentParameters($request, $shipperAccount);
 
+        $number_boxes = count(Arr::get($params, 'Packages', []));
+        if ($number_boxes == 0) {
+            $number_boxes = null;
+        }
+        $shipment->boxes =$number_boxes;
+
         if ($debug) {
             $shipmentData = $shipment->data;
             data_fill($shipmentData, 'debug.request', $params);
             $shipment->data = $shipmentData;
-            $shipment->save();
         }
+        $shipment->save();
 
 
         $apiResponse = $this->callApi(
@@ -118,7 +124,7 @@ class WhistlGb extends ShipperProvider {
             } catch (Exception $e) {
                 //
             }
-            $shipment->error_message   = $msg;
+            $shipment->error_message = $msg;
             $result['error_message'] = $msg;
 
             $result['errors'] = [json_encode($response)];
@@ -133,6 +139,16 @@ class WhistlGb extends ShipperProvider {
 
     }
 
+    /**
+     * @param $shipperAccount
+     * @param $request
+     * @param $pickUp
+     * @param $shipTo
+     * @param $parcelsData
+     * @param $cash_on_delivery
+     *
+     * @return array
+     */
     function prepareShipment($shipperAccount, $request, $pickUp, $shipTo, $parcelsData, $cash_on_delivery) {
 
 

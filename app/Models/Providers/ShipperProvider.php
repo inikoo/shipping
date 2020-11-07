@@ -140,6 +140,11 @@ class ShipperProvider extends Model {
     }
 
 
+    /**
+     * @param \Illuminate\Http\Request   $request
+     * @param \App\Models\ShipperAccount $shipperAccount
+     * @return array|void
+     */
     public function getShipmentParameters(Request $request, ShipperAccount $shipperAccount) {
 
 
