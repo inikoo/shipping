@@ -17,6 +17,7 @@ class Kernel extends ConsoleKernel
         Commands\CreateShipper::class,
         Commands\CreateTenant::class,
         Commands\UpgradingShipment::class,
+        Commands\UpdatingEvents::class,
 
     ];
 

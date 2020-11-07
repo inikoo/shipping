@@ -319,6 +319,11 @@ class ApcGb extends ShipperProvider {
     function track($shipment) {
 
 
+        if(!$shipment->tracking){
+            return;
+        }
+
+
         $apiResponse = $this->callApi(
             $this->api_url.'Tracks/'.$shipment->tracking.'.json?searchtype=CarrierWaybill&history=Yes', $this->getHeaders($shipment->shipperAccount), "[]", 'GET'
         );

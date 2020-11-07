@@ -24,7 +24,7 @@ class UpgradingShipment extends Command {
      *
      * @var string
      */
-    protected $description = 'Refresh login session fro DPD GB shipping accounts';
+    protected $description = 'Upgrade db after refactoring';
 
     /**
      * Create a new command instance.
