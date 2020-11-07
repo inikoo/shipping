@@ -11,13 +11,13 @@ use App\Models\Shipment;
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
 
-class RefurbishTracking extends Command {
+class UpgradingShipment extends Command {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'refurbish:tracking';
+    protected $signature = 'upgrading:shipment';
 
     /**
      * The console command description.
@@ -46,6 +46,30 @@ class RefurbishTracking extends Command {
 
         $shipments->each(
             function ($shipment) {
+
+
+
+                $shipment->boxes= count(Arr::get($shipment->data, 'debug.request.Packages', []));
+
+                if($shipment->boxes==0){
+
+                    $tmp=Arr::get($shipment->data, 'debug.original_request.parcels', false);
+                    if($tmp){
+                        $shipment->boxes= count(json_decode($tmp));
+
+                    }
+                }
+
+                if($shipment->data==[]){
+                    $shipment->boxes=1;
+                }
+
+                if($shipment->boxes==0){
+
+                    dd($shipment->data);
+                }
+
+
                 $tracking = null;
                 switch ($shipment->shipperAccount->label) {
                     case 'APC':
