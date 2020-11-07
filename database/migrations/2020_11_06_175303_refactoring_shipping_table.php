@@ -20,7 +20,10 @@ class RefactoringShippingTable extends Migration {
             'shipments', function (Blueprint $table) {
             $table->renameColumn('reference_2', 'tracking');
             $table->renameColumn('reference_3', 'error_message');
-            $table->string('state')->nullable()->index();
+            $table->unsignedSmallInteger('boxes')->default(1);
+
+            $table->string('min_state')->nullable()->index();
+            $table->string('max_state')->nullable()->index();
 
         }
         );
