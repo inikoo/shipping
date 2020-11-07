@@ -48,33 +48,41 @@ class UpgradingShipment extends Command {
             function ($shipment) {
 
 
+                $shipment->boxes = count(Arr::get($shipment->data, 'debug.request.Packages', []));
 
-                $shipment->boxes= count(Arr::get($shipment->data, 'debug.request.Packages', []));
+                if (!$shipment->boxes) {
 
-                if(!$shipment->boxes){
-
-                    $tmp=Arr::get($shipment->data, 'debug.original_request.parcels', false);
-                    if($tmp){
-                        $shipment->boxes= count(json_decode($tmp));
+                    $tmp = Arr::get($shipment->data, 'debug.original_request.parcels', false);
+                    if ($tmp) {
+                        $shipment->boxes = count(json_decode($tmp));
 
                     }
                 }
 
-                if($shipment->data==[]){
-                    $shipment->boxes=null;
+                if ($shipment->data == []) {
+                    $shipment->boxes = null;
                 }
 
-                if($shipment->boxes==0){
-                    $shipment->boxes=null;
+                if ($shipment->boxes == 0) {
+                    $shipment->boxes = null;
                 }
-
 
 
                 $tracking = null;
-                switch ($shipment->shipperAccount->label) {
-                    case 'APC':
+                switch ($shipment->shipperAccount->slug) {
+                    case 'apc-gb':
                         $tracking = Arr::get($shipment->data, 'debug.response.Orders.Order.WayBill', null);
                         break;
+                    case 'dpd-sk':
+                        $tracking = Arr::get($shipment->data, 'debug.response.result.result.0.mpsid', null);
+                        if ($tracking != null) {
+                            $tracking = substr($tracking, 0, -8);
+                        }
+                        break;
+                    case 'whistl-gb':
+                        $tracking=Arr::get($shipment->data, 'debug.response.ShippingInfo.CourierTrackingNumber', null);
+                        break;
+
                 }
                 $shipment->tracking = $tracking;
                 $shipment->save();
