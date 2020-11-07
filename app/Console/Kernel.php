@@ -16,7 +16,7 @@ class Kernel extends ConsoleKernel
         Commands\CreateUser::class,
         Commands\CreateShipper::class,
         Commands\CreateTenant::class,
-        Commands\RefurbishTracking::class,
+        Commands\UpgradingShipment::class,
 
     ];
 

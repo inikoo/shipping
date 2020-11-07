@@ -9,6 +9,7 @@ namespace App\Models\Providers;
 
 
 use App\Models\Country;
+use App\Models\Event;
 use App\Models\Shipment;
 use App\Models\ShipperAccount;
 use Carbon\Carbon;
@@ -52,12 +53,6 @@ class ApcGb extends ShipperProvider {
 
         $debug = Arr::get($shipperAccount->data, 'debug') == 'Yes';
 
-        $headers = [
-            "remote-user: Basic ".base64_encode($shipperAccount->credentials['email'].':'.$shipperAccount->credentials['password']),
-            "Content-Type: application/json"
-        ];
-
-
         $params = array(
             'Orders' => [
                 'Order' => $this->getShipmentParameters($request, $shipperAccount)
@@ -73,7 +68,7 @@ class ApcGb extends ShipperProvider {
 
 
         $apiResponse = $this->callApi(
-            $this->api_url.'Orders.json', $headers, json_encode($params)
+            $this->api_url.'Orders.json', $this->getHeaders($shipperAccount), json_encode($params)
         );
 
 
@@ -95,17 +90,18 @@ class ApcGb extends ShipperProvider {
         if ($apiResponse['status'] == 200) {
             if ($apiResponse['data']['Orders']['Messages']['Code'] == 'SUCCESS') {
 
-                $shipment->status = 'success';
-
-
                 $data = $apiResponse['data']['Orders']['Order'];
+                $tracking_number = $data['WayBill'];
 
-                $result['tracking_number'] = $data['WayBill'];
+                $shipment->status   = 'success';
+                $shipment->tracking = $tracking_number;
+
+                $result['tracking_number'] = $tracking_number;
                 $result['label_link']      = env('APP_URL').'/async_labels/'.$shipperAccount->id.'/'.$data['OrderNumber'];
                 $shipment->save();
 
                 $error_shipments = json_decode($request->get('error_shipments', '[]'));
-                if (  is_array($error_shipments) and   count($error_shipments) > 0) {
+                if (is_array($error_shipments) and count($error_shipments) > 0) {
                     (new Shipment)->wherein('id', $error_shipments)->update(['status' => 'fixed']);
                 }
 
@@ -310,13 +306,8 @@ class ApcGb extends ShipperProvider {
 
     function getLabel($labelID, $shipperAccount) {
 
-        $headers = [
-            "remote-user: Basic ".base64_encode($shipperAccount->credentials['email'].':'.$shipperAccount->credentials['password']),
-            "Content-Type: application/json"
-        ];
-
         $apiResponse = $this->callApi(
-            $this->api_url.'Orders/'.$labelID.'.json', $headers, json_encode([]), 'GET'
+            $this->api_url.'Orders/'.$labelID.'.json', $this->getHeaders($shipperAccount), json_encode([]), 'GET'
         );
 
         return base64_decode($apiResponse['data']['Orders']['Order']['Label']['Content']);
@@ -324,8 +315,75 @@ class ApcGb extends ShipperProvider {
 
     }
 
-    function track($shipment){
-        //
+    function track($shipment) {
+
+
+        $apiResponse = $this->callApi(
+            $this->api_url.'Tracks/'.$shipment->tracking.'.json?searchtype=CarrierWaybill&history=Yes', $this->getHeaders($shipment->shipperAccount), "[]", 'GET'
+        );
+
+        $boxes = Arr::get($apiResponse, 'data.Tracks.Track.ShipmentDetails.Items');
+
+        foreach ($boxes as $box) {
+
+            $box   = $box['Item'];
+            $boxID = $box['TrackingNumber'];
+
+            foreach ($box['Activity'] as $eventData) {
+
+                $eventData = $eventData['Status'];
+
+                try {
+                    $date = new Carbon(Arr::pull($eventData, 'DateTime'));
+                } catch (Exception $e) {
+                    $date = new Carbon();
+                }
+
+
+                $code = Str::of(strtolower(Arr::get($eventData, 'StatusDescription')))->snake();
+
+                switch ($code) {
+                    case 'ready_to_print':
+                        $code = 'created';
+                        break;
+                    case 'label_printed/_done':
+                        $code = 'label_printed';
+                        break;
+
+                    default:
+
+                }
+
+                $eventData = array_filter($eventData);
+
+                (new Event)->firstOrCreate(
+                    [
+                        'date'        => $date->format('Y-m-d H:i:s'),
+                        'box'         => $boxID,
+                        'code'        => $code,
+                        'shipment_id' => $shipment->id
+                    ],
+
+                    [
+                        'data' => $eventData
+                    ]
+                );
+
+            }
+
+
+        }
+
+        //dd($tackingData);
+
+    }
+
+    private function getHeaders($shipperAccount) {
+        return [
+            "remote-user: Basic ".base64_encode($shipperAccount->credentials['email'].':'.$shipperAccount->credentials['password']),
+            "Content-Type: application/json"
+        ];
+
     }
 
 }
