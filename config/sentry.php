@@ -8,6 +8,6 @@
 
 return array(
     'dsn'     => env('SENTRY_URL'),
-    'release' => trim(exec('git log --pretty="%h" -n1 HEAD')),
+    'release' => '0.9',
 );
 
