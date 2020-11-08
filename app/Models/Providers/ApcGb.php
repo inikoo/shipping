@@ -59,7 +59,7 @@ class ApcGb extends ShipperProvider {
             ]
         );
 
-        $shipment->boxes=Arr::get($params,'Orders.Order.ShipmentDetails.NumberOfPieces',null);
+        $shipment->boxes = Arr::get($params, 'Orders.Order.ShipmentDetails.NumberOfPieces', null);
 
         if ($debug) {
             $shipmentData = $shipment->data;
@@ -91,7 +91,7 @@ class ApcGb extends ShipperProvider {
         if ($apiResponse['status'] == 200) {
             if ($apiResponse['data']['Orders']['Messages']['Code'] == 'SUCCESS') {
 
-                $data = $apiResponse['data']['Orders']['Order'];
+                $data            = $apiResponse['data']['Orders']['Order'];
                 $tracking_number = $data['WayBill'];
 
                 $shipment->status   = 'success';
@@ -238,45 +238,30 @@ class ApcGb extends ShipperProvider {
                 unset($params['ShipmentDetails']['Items']['Item']);
                 $params['ShipmentDetails']['Items']['Item'][0]['Type']   = 'ALL';
                 $params['ShipmentDetails']['Items']['Item'][0]['Weight'] = $weight;
-
-
             }
 
 
         } else {
-
             $productCode = '';
-
             if (count($parcelsData) == 1) {
-
                 $dimensions = [
                     $parcelsData[0]['height'],
                     $parcelsData[0]['width'],
                     $parcelsData[0]['depth']
                 ];
                 rsort($dimensions);
-
-
                 if ($parcelsData[0]['weight'] <= 5 and $dimensions[0] <= 45 and $dimensions[1] <= 35 and $dimensions[2] <= 20) {
                     $productCode = 'LW16';
                 }
 
-
                 if ($parcelsData[0]['weight'] <= 5 and $dimensions[0] <= 45 and $dimensions[1] <= 35 and $dimensions[2] <= 20) {
                     $productCode = 'LW16';
                 }
-
-
             }
-
-
             if ($productCode == '') {
                 $productCode = 'ND16';
-
             }
-
             $params['ProductCode'] = $productCode;
-
         }
 
 
@@ -319,68 +304,152 @@ class ApcGb extends ShipperProvider {
     function track($shipment) {
 
 
-        if(!$shipment->tracking){
-            return;
+        if (!$shipment->tracking) {
+            return false;
         }
-
 
         $apiResponse = $this->callApi(
             $this->api_url.'Tracks/'.$shipment->tracking.'.json?searchtype=CarrierWaybill&history=Yes', $this->getHeaders($shipment->shipperAccount), "[]", 'GET'
         );
 
-        $boxes = Arr::get($apiResponse, 'data.Tracks.Track.ShipmentDetails.Items');
 
-        foreach ($boxes as $box) {
+        $boxes = Arr::get($apiResponse, 'data.Tracks.Track.ShipmentDetails.Items.0.Item');
 
-            $box   = $box['Item'];
-            $boxID = $box['TrackingNumber'];
-
-            foreach ($box['Activity'] as $eventData) {
-
-                $eventData = $eventData['Status'];
-
-                try {
-                    $date = new Carbon(Arr::pull($eventData, 'DateTime'));
-                } catch (Exception $e) {
-                    $date = new Carbon();
+        if($boxes!=null){
+            if (array_keys($boxes) !== range(0, count($boxes) - 1)) {
+                $this->track_box($shipment, $boxes);
+            } else {
+                foreach ($boxes as $box) {
+                    $this->track_box($shipment, $box);
                 }
-
-
-                $code = Str::of(strtolower(Arr::get($eventData, 'StatusDescription')))->snake();
-
-                switch ($code) {
-                    case 'ready_to_print':
-                        $code = 'created';
-                        break;
-                    case 'label_printed/_done':
-                        $code = 'label_printed';
-                        break;
-
-                    default:
-
-                }
-
-                $eventData = array_filter($eventData);
-
-                (new Event)->firstOrCreate(
-                    [
-                        'date'        => $date->format('Y-m-d H:i:s'),
-                        'box'         => $boxID,
-                        'code'        => $code,
-                        'shipment_id' => $shipment->id
-                    ],
-
-                    [
-                        'data' => $eventData
-                    ]
-                );
-
             }
 
+            $shipment->update_state();
+        }
+
+
+
+        return true;
+
+
+    }
+
+
+    private function save_event($eventData, $boxID, $shipment) {
+
+
+        try {
+            $date = Carbon::createFromFormat('d/m/Y H:i:s', Arr::pull($eventData, 'DateTime'), 'Europe/London');
+            $date->setTimezone('UTC');
+
+        } catch (Exception $e) {
+           return false;
+        }
+
+
+
+
+        $code   = Str::of(strtolower(Arr::get($eventData, 'StatusDescription')))->snake();
+        $state  = null;
+        $status = null;
+        switch ($code) {
+
+            case 'ready_to_print':
+                $state = 100;
+                break;
+            case 'label_printed/_done':
+                $code  = 'label_printed';
+                $state = 100;
+                break;
+            case 'manifested':
+            case 'at_hub':
+            case 'at_depot':
+            case 'scan':
+            case 'not_received_in_depot':
+                $state = 200;
+                break;
+            case 'at_delivery_depot':
+            case 'at_sending_depot':
+                $code  = 'at_delivery_depot';
+                $state = 200;
+                break;
+            case 'problem-_not_attempted':
+                $code  = 'problem_not_attempted';
+                $state = 200;
+                break;
+            case 'out_for_delivery':
+                $state = 300;
+                break;
+            case 'closed/_carded':
+                $code  = 'closed_carded';
+                $state = 400;
+                break;
+            case 'not_received_on_trunk':
+            case 'held_at_depot':
+            case 'check_address':
+                $state = 400;
+                break;
+            case 'updated/resolved':
+                $code  = 'updated_resolved';
+                $state = 400;
+                break;
+
+            case 'delivered':
+            case 'customer_refused':
+            case 'left_with_neightbour':
+            case 'collected_from_depot':
+            case 'left_as_instructed':
+            case 'return_to_sender':
+                $state = 500;
+                break;
+            case 'cancelled':
+                $state = 0;
+            default:
 
         }
 
-        //dd($tackingData);
+        switch (Arr::pull($eventData, 'StatusColor')) {
+            case 'green':
+                $status = 300;
+                break;
+            case 'orange':
+                $status = 200;
+                break;
+            case 'red':
+                $status = 100;
+                break;
+        }
+
+
+        $eventData = array_filter($eventData);
+
+        $event=(new Event)->firstOrCreate(
+            [
+                'date'        => $date->format('Y-m-d H:i:s'),
+                'box'         => $boxID,
+                'code'        => $code,
+                'shipment_id' => $shipment->id
+            ], [
+                'state'  => $state,
+                'status' => $status,
+                'data'   => $eventData
+            ]
+        );
+
+        return $event->id;
+
+    }
+
+    private function track_box($shipment, $box) {
+
+        $boxID = $box['TrackingNumber'];
+        if (array_keys($box['Activity']) !== range(0, count($box['Activity']) - 1)) {
+            $this->save_event($box['Activity']['Status'], $boxID, $shipment);
+        } else {
+            foreach ($box['Activity'] as $eventData) {
+                $this->save_event($eventData['Status'], $boxID, $shipment);
+            }
+        }
 
     }
 

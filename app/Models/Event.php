@@ -14,12 +14,12 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * Class Event
  *
- * @property integer $id
- * @property integer $shipment_id
- * @property string  $box
- * @property string  $type
- * @property string  $code
- * @property array   $data
+ * @property integer  $id
+ * @property integer  $shipment_id
+ * @property string   $box
+ * @property string   $type
+ * @property string   $code
+ * @property array    $data
  * @property Shipment $shipment
  *
  * @mixin \Illuminate\Database\Eloquent\Builder
@@ -27,21 +27,26 @@ use Illuminate\Database\Eloquent\Model;
 class Event extends Model {
 
     protected $casts = [
-        'data'     => 'array'
+        'data' => 'array'
     ];
 
     protected $attributes = [
-        'data'     => '{}'
+        'data' => '{}'
     ];
 
     protected $guarded = [];
-
 
     public function shipment() {
         return $this->belongsTo('App\Models\Shipment');
     }
 
-
+    protected static function booted() {
+        static::created(
+            function ($event) {
+                $event->shipment->update_state();
+            }
+        );
+    }
 
 
 }

@@ -24,6 +24,8 @@ class RefactoringShippingTable extends Migration {
 
             $table->string('min_state')->nullable()->index();
             $table->string('max_state')->nullable()->index();
+            $table->dateTimeTz('tracked_at')->nullable()->index();
+            $table->unsignedSmallInteger('tracked_count')->default(0);
 
         }
         );
@@ -40,6 +42,7 @@ class RefactoringShippingTable extends Migration {
             $table->renameColumn('tracking', 'reference_2');
             $table->renameColumn('error_message', 'reference_3');
             $table->dropColumn('min_state','max_state','boxes');
+            $table->dropColumn('tracked_at','tracked_count');
         }
         );
     }

@@ -18,9 +18,9 @@ class CreateEventsTable extends Migration
             $table->dateTimeTz('date', 0);
             $table->foreignId('shipment_id')->constrained();
             $table->string('box')->nullable()->index();
-            $table->string('type')->nullable()->index();
             $table->string('code')->nullable()->index();
-            $table->unsignedSmallInteger('state_index')->nullable()->index();
+            $table->unsignedSmallInteger('status')->nullable()->index();
+            $table->unsignedSmallInteger('state')->nullable()->index();
 
             $table->jsonb('data');
             $table->timestampsTz();

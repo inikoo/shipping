@@ -42,20 +42,15 @@ class UpdatingEvents extends Command {
     public function handle() {
 
         $shipments = Shipment::all();
-
         $shipments->each(
             function ($shipment) {
-
-                $shipment->track();
-
+                if($shipment->min_state<500){
+                    $shipment->track();
+                }
             }
 
         );
-
-
         return 0;
-
-
     }
 
 

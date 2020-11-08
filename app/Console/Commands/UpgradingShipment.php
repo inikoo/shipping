@@ -67,7 +67,6 @@ class UpgradingShipment extends Command {
                     $shipment->boxes = null;
                 }
 
-
                 $tracking = null;
                 switch ($shipment->shipperAccount->slug) {
                     case 'apc-gb':
@@ -86,7 +85,12 @@ class UpgradingShipment extends Command {
                 }
                 $shipment->tracking = $tracking;
                 $shipment->save();
+                $shipment->update_state();
+
+
             }
+
+
 
         );
 

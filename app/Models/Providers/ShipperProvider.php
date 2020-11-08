@@ -174,8 +174,12 @@ class ShipperProvider extends Model {
         //
     }
 
+
     function track($shipment) {
-        //
+        if (!$shipment->tracking) {
+            return false;
+        }
+        return false;
     }
 
 }
