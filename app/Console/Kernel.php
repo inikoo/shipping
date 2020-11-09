@@ -16,8 +16,8 @@ class Kernel extends ConsoleKernel
         Commands\CreateUser::class,
         Commands\CreateShipper::class,
         Commands\CreateTenant::class,
-        Commands\UpgradingShipment::class,
-        Commands\UpdatingEvents::class,
+        Commands\UpgradeShipment::class,
+        Commands\UpdateEvents::class,
 
     ];
 
@@ -29,6 +29,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        //
+        $schedule->command('update:events')->timezone('Europe/London')->everyThirtyMinutes()->between('8:00', '20:00');
+        $schedule->command('update:events')->timezone('Europe/London')->everyThreeHours()->unlessBetween('8:00', '20:00');
+
     }
 }

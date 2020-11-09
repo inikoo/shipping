@@ -11,13 +11,13 @@ use App\Models\Shipment;
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
 
-class UpgradingShipment extends Command {
+class UpgradeShipment extends Command {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'upgrading:shipment';
+    protected $signature = 'upgrade:shipment';
 
     /**
      * The console command description.

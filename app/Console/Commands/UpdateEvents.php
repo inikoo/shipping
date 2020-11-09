@@ -10,13 +10,13 @@ namespace App\Console\Commands;
 use App\Models\Shipment;
 use Illuminate\Console\Command;
 
-class UpdatingEvents extends Command {
+class UpdateEvents extends Command {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'updating:events';
+    protected $signature = 'update:events';
 
     /**
      * The console command description.
