@@ -67,6 +67,8 @@ class ShipperAccount extends Model {
             ];
         }
 
+        $shipmentData['callback_url']=$request->get('callback_url');
+
         $shipment = new Shipment(
             [
                 'reference'=>$request->get('reference'),
