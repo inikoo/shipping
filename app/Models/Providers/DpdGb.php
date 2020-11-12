@@ -189,7 +189,7 @@ class DpdGb extends ShipperProvider {
         }
 
 
-        $totalWeight=min($totalWeight,0.1);
+        $totalWeight=max($totalWeight,0.1);
 
         $address = [
             'organisation' => Str::limit(Arr::get($shipTo, 'organization'),30),
