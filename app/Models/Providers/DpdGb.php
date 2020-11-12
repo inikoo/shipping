@@ -380,7 +380,7 @@ class DpdGb extends ShipperProvider {
 
         if ($apiResponse['status'] == 200) {
 
-            if($apiResponse['data']['error']){
+            if(!empty($apiResponse['data']['error'])){
                 return ['services' => $services];
             }
 
