@@ -377,7 +377,13 @@ class DpdGb extends ShipperProvider {
         $services = [];
 
 
+
         if ($apiResponse['status'] == 200) {
+
+            if($apiResponse['data']['error']){
+                return ['services' => $services];
+            }
+
             foreach ($apiResponse['data']['data'] as $serviceData) {
                 $services[$serviceData['network']['networkCode']] = [
                     'id'   => [
