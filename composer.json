@@ -8,15 +8,16 @@
         "php": "^7.4",
         "ext-curl": "*",
         "ext-json": "*",
+        "ext-simplexml": "*",
         "ext-soap": "*",
         "azuyalabs/yasumi": "^2.3",
         "chuckrincon/lumen-config-discover": "^1.0",
         "doctrine/dbal": "^2.10",
         "laravel/lumen-framework": "^8.0",
+        "mpdf/mpdf": "^8.0",
         "sentry/sentry-laravel": "^1.8",
         "spatie/array-to-xml": "^2.14",
-        "tymon/jwt-auth": "^1.0",
-      "ext-simplexml": "*"
+        "tymon/jwt-auth": "^1.0"
     },
     "require-dev": {
         "fzaninotto/faker": "^1.9.1",

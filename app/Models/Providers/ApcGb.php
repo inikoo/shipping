@@ -290,7 +290,7 @@ class ApcGb extends ShipperProvider {
 
     }
 
-    function getLabel($labelID, $shipperAccount) {
+    function getLabel($labelID, $shipperAccount, $output = '') {
 
         $apiResponse = $this->callApi(
             $this->api_url.'Orders/'.$labelID.'.json', $this->getHeaders($shipperAccount), json_encode([]), 'GET'
@@ -315,7 +315,7 @@ class ApcGb extends ShipperProvider {
 
         $boxes = Arr::get($apiResponse, 'data.Tracks.Track.ShipmentDetails.Items.0.Item');
 
-        if($boxes!=null){
+        if ($boxes != null) {
             if (array_keys($boxes) !== range(0, count($boxes) - 1)) {
                 $this->track_box($shipment, $boxes);
             } else {
@@ -327,11 +327,7 @@ class ApcGb extends ShipperProvider {
             $shipment->update_state();
         }
 
-
-
         return true;
-
-
     }
 
 
@@ -343,10 +339,8 @@ class ApcGb extends ShipperProvider {
             $date->setTimezone('UTC');
 
         } catch (Exception $e) {
-           return false;
+            return false;
         }
-
-
 
 
         $code   = Str::of(strtolower(Arr::get($eventData, 'StatusDescription')))->snake();
@@ -423,7 +417,7 @@ class ApcGb extends ShipperProvider {
 
         $eventData = array_filter($eventData);
 
-        $event=(new Event)->firstOrCreate(
+        $event = (new Event)->firstOrCreate(
             [
                 'date'        => $date->format('Y-m-d H:i:s'),
                 'box'         => $boxID,

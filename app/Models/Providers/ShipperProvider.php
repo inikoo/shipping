@@ -111,11 +111,23 @@ class ShipperProvider extends Model {
 
 
         $raw_response = curl_exec($curl);
+
+        if ($raw_response == 'Unauthorized') {
+            $response['errors'][] = ['fail' => 'Unauthorized'];
+            $response['status']   = 530;
+
+            return $response;
+        }
+
+
         if ($result_encoding == 'xml') {
             $data = json_decode(json_encode(simplexml_load_string($raw_response)), true);
-        } else {
+        } elseif ($result_encoding == 'json') {
             $data = json_decode($raw_response, true);
+        } else {
+            $data = $raw_response;
         }
+
 
         $response = [
             'status' => curl_getinfo($curl, CURLINFO_HTTP_CODE),
@@ -143,6 +155,7 @@ class ShipperProvider extends Model {
     /**
      * @param \Illuminate\Http\Request   $request
      * @param \App\Models\ShipperAccount $shipperAccount
+     *
      * @return array|void
      */
     public function getShipmentParameters(Request $request, ShipperAccount $shipperAccount) {
@@ -166,7 +179,7 @@ class ShipperProvider extends Model {
         //
     }
 
-    function getLabel($labelID, $shipperAccount) {
+    function getLabel($labelID, $shipperAccount, $output) {
         //
     }
 
@@ -179,6 +192,7 @@ class ShipperProvider extends Model {
         if (!$shipment->tracking) {
             return false;
         }
+
         return false;
     }
 

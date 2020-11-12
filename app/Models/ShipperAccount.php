@@ -67,12 +67,12 @@ class ShipperAccount extends Model {
             ];
         }
 
-        $shipmentData['callback_url']=$request->get('callback_url');
+        $shipmentData['callback_url'] = $request->get('callback_url');
 
         $shipment = new Shipment(
             [
-                'reference'=>$request->get('reference'),
-                'data' => $shipmentData
+                'reference' => $request->get('reference'),
+                'data'      => $shipmentData
 
             ]
         );
@@ -82,8 +82,8 @@ class ShipperAccount extends Model {
         return $this->shipper->provider->createLabel($shipment, $request, $this);
     }
 
-    public function getLabel($labelID) {
-        return $this->shipper->provider->getLabel($labelID, $this);
+    public function getLabel($labelID, $output = '') {
+        return $this->shipper->provider->getLabel($labelID, $this, $output);
     }
 
     public function getServices($request) {

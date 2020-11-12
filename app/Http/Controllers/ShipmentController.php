@@ -76,14 +76,29 @@ class ShipmentController extends Controller {
 
     }
 
-    function display_async_label($shipperAccountID, $labelId) {
+    function display_async_label($shipperAccountID, $labelId, Request $request) {
 
         /**
          * @var $shipper_account \App\Models\ShipperAccount
          */
         $shipper_account = (new ShipperAccount)->find($shipperAccountID);
 
-        return response($shipper_account->getLabel($labelId), 200)->header('Content-Type', 'application/pdf');
+        switch ($request->get('output')){
+            case 'html':
+                $content_type='text/html';
+                break;
+            case 'clp':
+                $content_type='text/vnd.citizen-clp';
+                break;
+            case 'epl':
+                $content_type='text/vnd.eltron-epl';
+                break;
+            default:
+                $content_type='application/pdf';
+        }
+
+
+        return response($shipper_account->getLabel($labelId,$content_type), 200)->header('Content-Type', $content_type);
 
 
     }
