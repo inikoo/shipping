@@ -12,6 +12,7 @@ use App\Models\Shipment;
 use App\Models\ShipperAccount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 
 
 /**
@@ -177,6 +178,8 @@ class DpdGb extends ShipperProvider {
             }
             $totalWeight += $parcel['weight'];
 
+
+
             $parcels[] = [
                 'packageNumber' => $packageNumber,
                 'parcelProduct' => $items
@@ -186,8 +189,10 @@ class DpdGb extends ShipperProvider {
         }
 
 
+        $totalWeight=min($totalWeight,0.1);
+
         $address = [
-            'organisation' => Arr::get($shipTo, 'organization'),
+            'organisation' => Str::limit(Arr::get($shipTo, 'organization'),30),
             'countryCode'  => Arr::get($shipTo, 'country_code'),
             'street'       => Arr::get($shipTo, 'address_line_1'),
             'locality'     => Arr::get($shipTo, 'dependent_locality', ''),
