@@ -172,6 +172,8 @@ class WhistlGb extends ShipperProvider {
         $serviceInfo = json_decode($request->get('service_type'), true);
 
 
+        $shipTo=array_filter($shipTo);
+
         return [
             'Account'             => Arr::get($shipperAccount->credentials, 'account'),
             'CollectionDetails'   => [
@@ -179,7 +181,7 @@ class WhistlGb extends ShipperProvider {
                 'CollectionReadyTime' => $pickUp['ready'].':00',
             ],
             'DeliveryAddress'     => [
-                'ContactName' => Arr::get($shipTo, 'contact', 'Anonymous'),
+                'ContactName' => Arr::get($shipTo, 'contact', 'Householder'),
                 'CompanyName' => Arr::get($shipTo, 'organization'),
                 'Email'       => Arr::get($shipTo, 'email'),
                 'Phone'       => trim(Arr::get($shipTo, 'phone')),
