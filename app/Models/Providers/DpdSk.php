@@ -178,6 +178,10 @@ class DpdSk extends ShipperProvider {
         foreach ($parcelsData as $key => $value) {
 
 
+            $parcelsData[$key]['depth']=(int) max(round($value['depth'],0),1);
+            $parcelsData[$key]['height']=(int) max(round($value['height'],0),1);
+            $parcelsData[$key]['width']=(int) max(round($value['width'],0),1);
+
             $weight= round($value['weight'], 1);
             if ($weight> 31.5) {
                 $weight = '31.5';
@@ -188,7 +192,6 @@ class DpdSk extends ShipperProvider {
             $parcelsData[$key]['weight']=$weight;
 
         }
-
 
         try {
             $pickup_date = new Carbon(Arr::get($pickUp, 'date'));
