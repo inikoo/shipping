@@ -260,14 +260,8 @@ class ApcGb extends ShipperProvider {
             }
 
 
-
-            //AB51 8US. now allow TDAY code,
             if (!preg_match('/^(BT51|IV(\d\s|20|25|30|31|32|33|34|35|36|37|63)|AB(41|51|52)|PA79)/', $postalCode)) {
-
-              //  dd($productCode);
-
-
-                if (preg_match('/^((JE|GG|IM|KW|HS|ZE|IV)\d+)|AB(30|33|34|35|36|37|38)|AB[4-5][0-9]|DD[89]|FK(17|18|19|20|21)|PA(20|36|4\d|6\d|7\d)|PH((15|16|17|18|19)|[2-5][0-9])|KA(27|28)/', $postalCode)) {
+                if (preg_match('/^((JE|GG|IM|KW|HS|ZE|IV)\d+)|AB(30|33|34|35|36|37|38)|AB[4-5][0-9]|DD[89]|FK(16)|PA(20|36|4\d|6\d|7\d)|PH((15|16|17|18|19)|[2-5][0-9])|KA(27|28)/', $postalCode)) {
                     $productCode = 'TDAY';
                 }
             }
