@@ -174,13 +174,19 @@ class DpdSk extends ShipperProvider {
     function prepareShipment($shipperAccount, $request, $pickUp, $shipTo, $parcelsData, $cash_on_delivery) {
 
 
+
         foreach ($parcelsData as $key => $value) {
-            $value['weight'] = round($value['weight'], 1);
-            if ($value['weight'] > 31.5) {
-                $parcelsData[$key]['weight'] = '31.5';
-            } elseif ($value['weight'] < 0.1) {
-                $parcelsData[$key]['weight'] = '0.1';
+
+
+            $weight= round($value['weight'], 1);
+            if ($weight> 31.5) {
+                $weight = '31.5';
+            } elseif ($weight < 0.1) {
+                $weight = '0.1';
             }
+
+            $parcelsData[$key]['weight']=$weight;
+
         }
 
 
