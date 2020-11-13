@@ -167,6 +167,10 @@ class ApcGb extends ShipperProvider {
             $name = Arr::get($shipTo, 'contact');
         }
 
+        if($name==''){
+            $name='Householder';
+        }
+
         $country = (new Country)->where('code', $shipTo['country_code'])->first();
 
         $address2 = Arr::get($shipTo, 'address_line_2');
