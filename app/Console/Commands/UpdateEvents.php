@@ -25,14 +25,6 @@ class UpdateEvents extends Command {
      */
     protected $description = 'Update tracking events';
 
-    /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct() {
-        parent::__construct();
-    }
 
     /**
      * Execute the console command.

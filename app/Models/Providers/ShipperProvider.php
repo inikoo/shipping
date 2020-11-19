@@ -43,14 +43,9 @@ class ShipperProvider extends Model {
     ];
 
 
-    function __construct(array $attributes = []) {
-        parent::__construct($attributes);
-    }
-
     public function shipper() {
         return $this->morphOne('App\Models\Shipper', 'provider');
     }
-
 
     public function createShipperAccount(Request $request) {
 

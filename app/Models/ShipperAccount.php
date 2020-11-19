@@ -78,7 +78,6 @@ class ShipperAccount extends Model {
         );
         $this->shipments()->save($shipment);
 
-
         return $this->shipper->provider->createLabel($shipment, $request, $this);
     }
 

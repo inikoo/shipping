@@ -15,6 +15,8 @@ use App\Models\Providers\GlsEs;
 use App\Models\Providers\GlsSk;
 use App\Models\Providers\Postmen;
 use App\Models\Providers\WhistlGb;
+use App\Models\Providers\DhlSk;
+
 use App\Models\Shipper;
 use Exception;
 use Illuminate\Console\Command;
@@ -34,14 +36,7 @@ class CreateShipper extends Command {
      */
     protected $description = 'Create country shipper';
 
-    /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct() {
-        parent::__construct();
-    }
+
 
     /**
      * Execute the console command.
@@ -85,6 +80,9 @@ class CreateShipper extends Command {
                 break;
             case 'whistl-gb':
                 $shipper_provider = (new WhistlGb)->where('slug', 'v1')->first();
+                break;
+            case 'dhl-sk':
+                $shipper_provider = (new DhlSk)->where('slug', 'v3')->first();
                 break;
             case 'postmen-devel':
                 $shipper_provider = (new Postmen)->where('slug', 'v3-devel')->first();
