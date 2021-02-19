@@ -48,7 +48,7 @@ class WhistlGb extends ShipperProvider {
         if ($number_boxes == 0) {
             $number_boxes = null;
         }
-        $shipment->boxes =$number_boxes;
+        $shipment->boxes = $number_boxes;
 
         if ($debug) {
             $shipmentData = $shipment->data;
@@ -104,7 +104,7 @@ class WhistlGb extends ShipperProvider {
             }
 
 
-            $result['tracking_number'] = Arr::get($apiResponse, 'data.ShippingInfo.CourierTrackingNumber');
+            $result['tracking_number'] = Arr::get($apiResponse, 'data.ShippingInfo.CourierTrackingNumber').'001';
             //$result['tracking_number'] = Arr::get($apiResponse, 'data.ShippingInfo.CourierTrackingNumber');
             $result['label_link'] = env('APP_URL').'/labels/'.$pdfChecksum;
 
@@ -144,19 +144,19 @@ class WhistlGb extends ShipperProvider {
      * @param $request
      * @param $pickUp
      * @param $shipTo
-     * @param $parcelsData
-     * @param $cash_on_delivery
+     * @param $parcels
+     * @param $order
      *
      * @return array
      */
-    function prepareShipment($shipperAccount, $request, $pickUp, $shipTo, $parcelsData, $cash_on_delivery) {
+    function prepareShipment($shipperAccount, $request, $pickUp, $shipTo, $parcels, $order) {
 
 
-        $parcels = [];
-        foreach ($parcelsData as $parcel) {
+        $packages = [];
+        foreach ($parcels as $parcel) {
 
 
-            $parcels[] = [
+            $packages[] = [
                 'Package' => [
                     'Dimensions' => [
                         'Length' => max(floor(Arr::get($parcel, 'depth')), 1),
@@ -172,7 +172,7 @@ class WhistlGb extends ShipperProvider {
         $serviceInfo = json_decode($request->get('service_type'), true);
 
 
-        $shipTo=array_filter($shipTo);
+        $shipTo = array_filter($shipTo);
 
         return [
             'Account'             => Arr::get($shipperAccount->credentials, 'account'),
@@ -199,7 +199,7 @@ class WhistlGb extends ShipperProvider {
             'Reference2'          => $request->get('reference2'),
             'SpecialInstructions' => Str::limit(strip_tags($request->get('note')), 35, ''),
             'ContentsDescription' => 'Goods',
-            'Packages'            => $parcels,
+            'Packages'            => $packages,
             'ServiceInfo'         => $serviceInfo
 
 
