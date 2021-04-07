@@ -104,7 +104,7 @@ class WhistlGb extends ShipperProvider {
             }
 
 
-            $result['tracking_number'] = Arr::get($apiResponse, 'data.ShippingInfo.CourierTrackingNumber').'001';
+            $result['tracking_number'] = Arr::get($apiResponse, 'data.ShippingInfo.CourierTrackingNumber');
             //$result['tracking_number'] = Arr::get($apiResponse, 'data.ShippingInfo.CourierTrackingNumber');
             $result['label_link'] = env('APP_URL').'/labels/'.$pdfChecksum;
 
@@ -149,7 +149,7 @@ class WhistlGb extends ShipperProvider {
      *
      * @return array
      */
-    function prepareShipment($shipperAccount, $request, $pickUp, $shipTo, $parcels, $order) {
+    function prepareShipment($shipperAccount, $request, $pickUp, $shipTo, $parcels, $order): array {
 
 
         $packages = [];
